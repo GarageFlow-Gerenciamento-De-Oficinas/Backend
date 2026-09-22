@@ -4,10 +4,12 @@ from .models import Client
 from .serializers import ClientSerializer
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 class ClientViewSet(ModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset()
