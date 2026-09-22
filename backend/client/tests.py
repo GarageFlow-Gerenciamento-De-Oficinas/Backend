@@ -1,12 +1,13 @@
-from rest_framework.test import APITestCase
+from backend.tests.base import AuthenticatedAPITestCase
 from rest_framework import status
 from django.urls import reverse
 
 from .models import Client
 
-class ClientAPITestCase(APITestCase):
+class ClientAPITestCase(AuthenticatedAPITestCase):
 
     def setUp(self):
+        super().setUp()
         self.client_data = {
             "name": "João da Silva",
             "email": "joao@example.com",
