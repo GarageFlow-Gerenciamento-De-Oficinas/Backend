@@ -1,0 +1,58 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: garageflow
+          POSTGRES_USER: garageflow
+          POSTGRES_PASSWORD: garageflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U garageflow -d garageflow"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      SECRET_KEY: django-ci-test-secret-key
+      DB_NAME: garageflow
+      DB_USER: garageflow
+      DB_PASSWORD: garageflow
+      DB_HOST: localhost
+      DB_PORT: 5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        working-directory: backend
+        run: python manage.py migrate
+
+      - name: Run tests
+        working-directory: backend
+        run: python manage.py test
