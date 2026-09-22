@@ -619,7 +619,7 @@ O Django permanece localizado em:
 * [x] Estrutura inicial das aplicações
 * [x] Swagger / OpenAPI
 * [x] Autenticação JWT
-* [ ] CI/CD completo
+* [x] CI/CD completo
 
 ### Usuários e autorização
 
@@ -677,7 +677,7 @@ O Django permanece localizado em:
 * [x] Documentação OpenAPI
 * [x] Swagger UI
 * [x] Pipeline inicial de CI
-* [ ] Pipeline obrigatório para Merge Requests
+* [x] Pipeline obrigatório para Merge Requests
 * [ ] Lint
 * [ ] Relatório de cobertura de testes
 * [ ] Build automatizado
