@@ -11,6 +11,7 @@ O projeto tem como objetivo centralizar e organizar os processos operacionais de
 O backend é responsável por fornecer a API e implementar as principais regras de negócio do sistema, incluindo:
 
 * Gerenciamento de usuários, grupos e permissões
+* Autenticação e autorização
 * Cadastro de clientes
 * Cadastro e gerenciamento de veículos
 * Catálogo de serviços
@@ -68,6 +69,8 @@ O ambiente de desenvolvimento é executado através de Docker e pode ser utiliza
 * Django
 * Django REST Framework
 * PostgreSQL
+* Simple JWT
+* drf-spectacular
 
 ### Infraestrutura
 
@@ -78,8 +81,14 @@ O ambiente de desenvolvimento é executado através de Docker e pode ser utiliza
 ### Desenvolvimento
 
 * Git
-* GitHub
+* GitLab
 * VS Code
+
+### Qualidade
+
+* Testes automatizados
+* CI/CD
+* OpenAPI / Swagger
 
 ---
 
@@ -87,6 +96,7 @@ O ambiente de desenvolvimento é executado através de Docker e pode ser utiliza
 
 ```text
 Backend/
+
 ├── .devcontainer/
 │   └── devcontainer.json
 │
@@ -98,6 +108,18 @@ Backend/
 │   │   ├── urls.py
 │   │   └── wsgi.py
 │   │
+│   ├── client/
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   ├── views.py
+│   │   └── tests.py
+│   │
+│   ├── user/
+│   │   ├── models.py
+│   │   ├── ...
+│   │   └── urls.py
+│   │
 │   └── manage.py
 │
 ├── docker/
@@ -105,6 +127,7 @@ Backend/
 │
 ├── .env.example
 ├── .gitignore
+├── .gitlab-ci.yml
 ├── docker-compose.yml
 ├── README.md
 └── requirements.txt
@@ -114,7 +137,40 @@ Backend/
 
 ---
 
-## 🔐 Usuários, grupos e permissões
+## 🔐 Autenticação e autorização
+
+O sistema utiliza autenticação baseada em **JWT (JSON Web Token)**.
+
+O usuário utiliza seu e-mail e senha para obter os tokens de autenticação através da API.
+
+### Login
+
+```text
+POST /api/auth/login/
+```
+
+Exemplo de requisição:
+
+```json
+{
+    "email": "usuario@email.com",
+    "password": "senha"
+}
+```
+
+A API retorna um `access token` e um `refresh token`.
+
+O `access token` deve ser enviado nas requisições autenticadas através do header:
+
+```text
+Authorization: Bearer <access_token>
+```
+
+A autenticação utiliza o **Django REST Framework Simple JWT**.
+
+---
+
+## 👥 Usuários, grupos e permissões
 
 O sistema utiliza um modelo de autorização baseado em **grupos e permissões**.
 
@@ -126,7 +182,7 @@ Os perfis inicialmente previstos são:
 * **Atendente**
 * **Mecânico**
 
-A autorização será aplicada de acordo com o recurso e a ação que o usuário está tentando executar.
+As permissões são estruturadas considerando o recurso e a ação que o usuário está tentando executar.
 
 Exemplos:
 
@@ -145,6 +201,69 @@ Ação: movimentar
 ```
 
 Esse modelo permite que novas permissões sejam adicionadas sem depender exclusivamente de papéis fixos no código.
+
+---
+
+## 👤 Clientes
+
+O cadastro de clientes possui uma regra de negócio que exige que o cliente possua pelo menos um meio de contato:
+
+* E-mail
+* Telefone
+
+Um cliente não pode ser fisicamente excluído do banco de dados.
+
+Quando um cliente deixa de ser utilizado, seu registro é **desativado**, preservando os dados históricos.
+
+O modelo utiliza o campo:
+
+```text
+is_active
+```
+
+A API utiliza o seguinte comportamento:
+
+```text
+GET /api/clients/
+```
+
+Retorna somente clientes ativos.
+
+Para consultar clientes ativos:
+
+```text
+GET /api/clients/?is_active=true
+```
+
+Para consultar clientes inativos:
+
+```text
+GET /api/clients/?is_active=false
+```
+
+Uma requisição `DELETE` não remove fisicamente o registro. Ela apenas altera o cliente para inativo.
+
+Essa abordagem preserva a integridade histórica dos dados.
+
+---
+
+## 📖 Documentação da API
+
+A API utiliza **OpenAPI** para geração automática da documentação.
+
+A interface **Swagger** está disponível em:
+
+```text
+/api/docs/
+```
+
+O schema OpenAPI pode ser acessado através de:
+
+```text
+/api/schema/
+```
+
+A documentação é gerada a partir dos endpoints e configurações da própria API, permitindo que a documentação acompanhe a evolução do backend.
 
 ---
 
@@ -283,6 +402,85 @@ Isso permite manter a rastreabilidade das operações mesmo após alterações p
 
 ---
 
+## 🧪 Testes
+
+O projeto utiliza o sistema de testes do Django e Django REST Framework para validar as regras e comportamentos da API.
+
+Atualmente existem testes automatizados para a API de clientes, cobrindo cenários como:
+
+* Criação de cliente válido
+* Validação de dados obrigatórios
+* Validação de contato
+* Tentativa de cadastro duplicado
+* Listagem
+* Consulta individual
+* Atualização
+* Atualização com dados inválidos
+* Consulta de clientes ativos
+* Consulta de clientes inativos
+* Desativação de clientes
+* Garantia de que registros desativados permanecem no banco
+
+Para executar todos os testes:
+
+```bash
+python manage.py test
+```
+
+Ou utilizando Docker:
+
+```bash
+docker compose exec web python manage.py test
+```
+
+A suíte de testes será ampliada conforme novas regras de negócio forem implementadas.
+
+---
+
+## 🔄 Integração contínua
+
+O projeto utiliza **GitLab CI/CD** para automatizar a execução dos testes.
+
+O pipeline é definido através do arquivo:
+
+```text
+.gitlab-ci.yml
+```
+
+A rotina de CI prepara um ambiente isolado contendo Python e PostgreSQL, instala as dependências do projeto, executa as migrations e executa a suíte completa de testes.
+
+Fluxo previsto:
+
+```text
+Feature Branch
+      ↓
+   Commit
+      ↓
+    Push
+      ↓
+Merge Request
+      ↓
+ GitLab CI/CD
+      ↓
+ Instala dependências
+      ↓
+ PostgreSQL
+      ↓
+    Migrations
+      ↓
+ Testes automatizados
+      ↓
+ ┌────┴────┐
+ ↓         ↓
+PASS      FAIL
+ ↓         ↓
+Merge    Bloqueio
+```
+
+O objetivo é utilizar o pipeline como **quality gate**, impedindo que alterações sejam incorporadas à branch principal enquanto a rotina automatizada de testes estiver falhando.
+
+---
+
 ## 🐳 Ambiente de desenvolvimento
 
 O projeto utiliza Docker para padronizar o ambiente de desenvolvimento.
@@ -300,6 +498,7 @@ Clone o repositório:
 
 ```bash
 git clone <repository-url>
+
 cd Backend
 ```
 
@@ -356,6 +555,12 @@ Para executar os testes:
 docker compose exec web python manage.py test
 ```
 
+A documentação Swagger estará disponível em:
+
+```text
+http://localhost:8000/api/docs/
+```
+
 ---
 
 ## 🧑‍💻 Dev Container
@@ -400,26 +605,6 @@ O Django permanece localizado em:
 
 ---
 
-## 🧪 Testes
-
-O projeto utiliza o sistema de testes do Django.
-
-Para executar todos os testes:
-
-```bash
-python manage.py test
-```
-
-Ou, utilizando Docker:
-
-```bash
-docker compose exec web python manage.py test
-```
-
-Os testes serão ampliados conforme novas regras de negócio forem implementadas.
-
----
-
 ## 🗺️ Roadmap
 
 ### Foundation
@@ -427,21 +612,27 @@ Os testes serão ampliados conforme novas regras de negócio forem implementadas
 * [x] Docker
 * [x] PostgreSQL
 * [x] Django
+* [x] Django REST Framework
 * [x] Variáveis de ambiente
 * [x] Dev Container
 * [x] Git
-* [ ] Estrutura inicial das aplicações
+* [x] Estrutura inicial das aplicações
+* [x] Swagger / OpenAPI
+* [x] Autenticação JWT
+* [ ] CI/CD completo
 
 ### Usuários e autorização
 
-* [ ] Usuário
-* [ ] Grupos
-* [ ] Permissões
-* [ ] Autorização por recurso/ação
+* [x] Usuário customizado
+* [x] Autenticação por e-mail
+* [x] Grupos
+* [x] Permissões
+* [x] Estrutura de permissões por recurso/ação
+* [ ] Autorização completa por endpoint
 
 ### Cadastros
 
-* [ ] Clientes
+* [x] Clientes
 * [ ] Veículos
 * [ ] Serviços
 * [ ] Peças
@@ -480,6 +671,18 @@ Os testes serão ampliados conforme novas regras de negócio forem implementadas
 * [ ] Histórico de estoque
 * [ ] Histórico financeiro
 
+### Qualidade e entrega
+
+* [x] Testes automatizados
+* [x] Documentação OpenAPI
+* [x] Swagger UI
+* [x] Pipeline inicial de CI
+* [ ] Pipeline obrigatório para Merge Requests
+* [ ] Lint
+* [ ] Relatório de cobertura de testes
+* [ ] Build automatizado
+* [ ] Deploy automatizado
+
 ---
 
 ## 📚 Documentação
@@ -496,4 +699,14 @@ Sistema de gerenciamento para oficinas mecânicas.
 
 Projeto desenvolvido por **Jean França** como projeto de portfólio e estudo de engenharia de software.
 
-O objetivo é demonstrar não apenas conhecimento de tecnologias, mas também capacidade de modelar regras de negócio, projetar sistemas, preservar integridade de dados e construir uma aplicação completa.
+O objetivo é demonstrar não apenas conhecimento de tecnologias, mas também capacidade de:
+
+* Modelar regras de negócio
+* Projetar sistemas
+* Desenvolver APIs
+* Implementar autenticação e autorização
+* Preservar integridade de dados
+* Criar testes automatizados
+* Documentar APIs
+* Aplicar práticas de integração contínua
+* Construir uma aplicação completa
