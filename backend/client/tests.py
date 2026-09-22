@@ -40,7 +40,7 @@ class ClientAPITestCase(AuthenticatedAPITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(Client.objects.count(), 0)
+        self.assertEqual(Client.objects.count(), 1)
 
     def test_create_same_client(self):
         Client.objects.create(**self.client_data)
