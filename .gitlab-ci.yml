@@ -1,0 +1,32 @@
+image: python:3.13
+
+services:
+  - name: postgres:16
+    alias: postgres
+
+variables:
+  SECRET_KEY: "django-ci-test-secret-key"
+  DB_NAME: garageflow
+  DB_USER: garageflow
+  DB_PASSWORD: garageflow
+  DB_HOST: postgres
+  DB_PORT: "5432"
+
+  POSTGRES_DB: garageflow
+  POSTGRES_USER: garageflow
+  POSTGRES_PASSWORD: garageflow
+
+
+stages:
+  - test
+
+before_script:
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+
+test:
+  stage: test
+  script:
+    - cd backend
+    - python manage.py migrate
+    - python manage.py test
