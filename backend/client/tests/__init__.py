@@ -1,2 +1,2 @@
-from .client import ClientAPITestCase
-from .vehicle import VehicleAPITestCase
+from .test_client import ClientAPITestCase
+from .test_vehicle import VehicleAPITestCase
