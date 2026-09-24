@@ -1,5 +1,8 @@
+from typing import Any
+
 from rest_framework import serializers
 
+from user.models import User
 from user.services.activation import activate_user, ActivationError
 
 class UserActivationSerializer(serializers.Serializer):
@@ -10,7 +13,7 @@ class UserActivationSerializer(serializers.Serializer):
         min_length=8
     )
 
-    def save(self):
+    def save(self) -> User:
         try:
             return activate_user(
                 token = self.validated_data["token"],
@@ -20,3 +23,6 @@ class UserActivationSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "token": str(exc)
             })
+
+class UserActivationResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()

@@ -1,16 +1,14 @@
-import hashlib
-
 from django.db import transaction
 from django.utils import timezone
 
-from user.models import UserInvitation
+from user.models import UserInvitation, User
 from .invitation import hash_invitation_token
 
 class ActivationError(Exception):
     pass
 
 @transaction.atomic
-def activate_user(token, password):
+def activate_user(token: str, password: str) -> User:
     token_hash = hash_invitation_token(token)
 
     invitation = (
