@@ -47,8 +47,8 @@ class ClientViewSet(ActiveStatusFilterMixin, ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         client = self.get_object()
 
-        client.active = False
-        client.save(update_fields=["active"])
+        client.is_active = False
+        client.save(update_fields=["is_active"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(

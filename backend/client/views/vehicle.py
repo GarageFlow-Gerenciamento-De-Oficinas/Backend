@@ -57,6 +57,6 @@ class VehicleViewSet(ActiveStatusFilterMixin, ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         vehicle = self.get_object()
 
-        vehicle.active = False
-        vehicle.save(update_fields=["active"])
+        vehicle.is_active = False
+        vehicle.save(update_fields=["is_active"])
         return Response(status=status.HTTP_204_NO_CONTENT)

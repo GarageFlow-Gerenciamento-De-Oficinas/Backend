@@ -87,7 +87,7 @@ class UserAPITestCase(AuthenticatedAPITestCase):
             password = "testpassword123",
             address = "Rua das Flores, 123",
             phone = "16999999999",
-            active = False,
+            is_active = False,
         )
         url = reverse("user-list")
         response = self.client.get(url, {"show": "not_active"})
@@ -100,14 +100,14 @@ class UserAPITestCase(AuthenticatedAPITestCase):
             password = "testpassword123",
             address = "Rua das Flores, 123",
             phone = "16999999999",
-            active = False,
+            is_active = False,
         )
         User.objects.create_user(
             email="julio@example.com",
             password = "testpassword123",
             address = "Rua das arvores, 123",
             phone = "16999999998",
-            active = True,
+            is_active = True,
         )
         url = reverse("user-list")
         response = self.client.get(url, {"show": "all"})
@@ -120,7 +120,7 @@ class UserAPITestCase(AuthenticatedAPITestCase):
             password = "testpassword123",
             address = "Rua das arvores, 123",
             phone = "16999999998",
-            active = True,
+            is_active = True,
         )
         url = reverse("user-detail", kwargs={"pk": user.id})
         response = self.client.get(url)
@@ -140,7 +140,7 @@ class UserAPITestCase(AuthenticatedAPITestCase):
             password = "testpassword123",
             address = "Rua das arvores, 123",
             phone = "16999999998",
-            active = True,
+            is_active = True,
         )
         updated_data = {
             "first_name": "Julio",
@@ -176,7 +176,7 @@ class UserAPITestCase(AuthenticatedAPITestCase):
             password = "testpassword123",
             address = "Rua das arvores, 123",
             phone = "16999999998",
-            active = True,
+            is_active = True,
         )
 
         url = reverse(
@@ -189,5 +189,5 @@ class UserAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         user.refresh_from_db()
         self.assertEqual(
-            User.objects.filter(active=False).count(), 1
+            User.objects.filter(is_active=False).count(), 1
         )

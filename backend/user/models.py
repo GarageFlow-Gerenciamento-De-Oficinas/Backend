@@ -39,7 +39,6 @@ class User(AbstractUser):
     phone = models.CharField(verbose_name="Telefone para contato", max_length=11)
     created_at = models.DateTimeField(verbose_name="Data de criação", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Ultima atualização", auto_now=True)
-    active = models.BooleanField(verbose_name="Ativo", default=True)
     activated_at = models.DateTimeField(
         verbose_name="Data de ativação",
         null=True,
@@ -49,13 +48,6 @@ class User(AbstractUser):
     class Meta:
         verbose_name = _("Usuário")
         verbose_name_plural = _("Usuários")
-
-        constraints = [
-            models.UniqueConstraint(
-                fields= ["email"],
-                name = "unique_user_constraint"
-            )
-        ]
 
 
     USERNAME_FIELD = "email"

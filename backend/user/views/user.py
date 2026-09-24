@@ -58,6 +58,6 @@ class UserViewSet(ActiveStatusFilterMixin, ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         user = self.get_object()
 
-        user.active = False
-        user.save(update_fields=["active"])
+        user.is_active = False
+        user.save(update_fields=["is_active"])
         return Response(status=status.HTTP_204_NO_CONTENT)

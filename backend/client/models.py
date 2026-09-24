@@ -6,7 +6,7 @@ class Client(models.Model):
     email = models.EmailField(verbose_name="Email para contato", blank = True)
     phone = models.CharField(verbose_name="Telefone para contato", max_length=11, blank=True)
     address = models.CharField(verbose_name="Endereço", blank=True)
-    active = models.BooleanField(verbose_name="Ativo", default=True)
+    is_active = models.BooleanField(verbose_name="Ativo", default=True)
     created_at = models.DateTimeField(verbose_name="Data de criação", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Ultima atualização", auto_now=True)
 
@@ -35,7 +35,7 @@ class Vehicle(models.Model):
     model = models.CharField(verbose_name="Modelo do veiculo", max_length=60)
     year = models.CharField(verbose_name="Ano do veiculo", max_length=4)
     color = models.CharField(verbose_name="Cor do veiculo", max_length=30)
-    active = models.BooleanField(verbose_name="Veiculo ativo", default=True)
+    is_active = models.BooleanField(verbose_name="Veiculo ativo", default=True)
     created_at = models.DateTimeField(verbose_name="Data de criação", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Ultima atualização", auto_now=True)
 
@@ -46,7 +46,7 @@ class Vehicle(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields= ["plate"],
-                condition=models.Q(active=True),
+                condition=models.Q(is_active=True),
                 name = "unique_car_constraint"
             )
         ]

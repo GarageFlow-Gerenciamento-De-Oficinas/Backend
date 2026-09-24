@@ -1,5 +1,5 @@
 class ActiveStatusFilterMixin:
-    active_field = "active"
+    active_field = "is_active"
 
     def filter_by_active_status(self, queryset):
         show = self.request.query_params.get("show")
