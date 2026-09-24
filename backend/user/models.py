@@ -38,8 +38,20 @@ class User(AbstractUser):
     phone = models.CharField(verbose_name="Telefone para contato", max_length=11)
     created_at = models.DateTimeField(verbose_name="Data de criação", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Ultima atualização", auto_now=True)
+    activated_at = models.DateTimeField(
+        verbose_name="Data de ativação",
+        null=True,
+        blank=True,
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects= UserManager()
+
+class UserInvitation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="invitations",)
+    token_hash = models.CharField(max_length=128,)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True,)
+    created_at = models.DateTimeField(auto_now_add=True,)
