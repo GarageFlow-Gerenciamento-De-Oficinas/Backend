@@ -1,6 +1,8 @@
-from django.urls import path
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.routers import DefaultRouter
 
-urlpatterns = [
-    path("login/", TokenObtainPairView.as_view(), name="login"),
-]
+from .views import UserViewSet
+
+router = DefaultRouter()
+router.register("", UserViewSet, basename="user")
+
+urlpatterns = router.urls
