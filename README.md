@@ -59,6 +59,8 @@ O backend utiliza uma arquitetura baseada em Django, com PostgreSQL como banco d
 
 O ambiente de desenvolvimento é executado através de Docker e pode ser utilizado através do Dev Container do VS Code.
 
+A aplicação separa responsabilidades entre diferentes camadas, mantendo regras de negócio mais complexas em **services**, enquanto serializers são responsáveis pela validação e transformação dos dados e views pela exposição dos endpoints HTTP.
+
 ---
 
 ## 🛠️ Tecnologias
@@ -117,8 +119,13 @@ Backend/
 │   │
 │   ├── user/
 │   │   ├── models.py
-│   │   ├── ...
-│   │   └── urls.py
+│   │   ├── serializers/
+│   │   ├── services/
+│   │   │   ├── invitation.py
+│   │   │   └── activation.py
+│   │   ├── views/
+│   │   ├── urls.py
+│   │   └── tests/
 │   │
 │   └── manage.py
 │
@@ -137,13 +144,15 @@ Backend/
 
 ---
 
-## 🔐 Autenticação e autorização
+# 🔐 Autenticação e autorização
 
 O sistema utiliza autenticação baseada em **JWT (JSON Web Token)**.
 
+A autenticação utiliza o **Django REST Framework Simple JWT**.
+
 O usuário utiliza seu e-mail e senha para obter os tokens de autenticação através da API.
 
-### Login
+## Login
 
 ```text
 POST /api/auth/login/
@@ -166,11 +175,9 @@ O `access token` deve ser enviado nas requisições autenticadas através do hea
 Authorization: Bearer <access_token>
 ```
 
-A autenticação utiliza o **Django REST Framework Simple JWT**.
-
 ---
 
-## 👥 Usuários, grupos e permissões
+# 👥 Usuários, grupos e permissões
 
 O sistema utiliza um modelo de autorização baseado em **grupos e permissões**.
 
@@ -202,9 +209,229 @@ Ação: movimentar
 
 Esse modelo permite que novas permissões sejam adicionadas sem depender exclusivamente de papéis fixos no código.
 
+A implementação da autorização específica por endpoint será realizada posteriormente através do sistema de permissões.
+
 ---
 
-## 👤 Clientes
+# 👤 Usuários
+
+O GarageFlow utiliza um **User Model customizado**, baseado no `AbstractUser` do Django.
+
+O sistema utiliza o **e-mail como identificador de autenticação**, não utilizando o campo `username`.
+
+Os usuários possuem informações como:
+
+* E-mail
+* Endereço
+* Telefone
+* Data de criação
+* Data de atualização
+* Data de ativação
+* Status de atividade
+
+O modelo também diferencia dois conceitos importantes:
+
+### Usuário ativado
+
+O usuário possui uma senha definida e uma data registrada em `activated_at`.
+
+### Usuário desativado
+
+O campo `is_active` é utilizado para impedir o acesso de um usuário que foi administrativamente desativado.
+
+A criação de usuários foi projetada para não permitir que administradores definam ou conheçam a senha do usuário.
+
+---
+
+## ✉️ Convites de ativação
+
+O cadastro de um usuário utiliza um fluxo baseado em **convite de ativação**.
+
+O fluxo previsto é:
+
+```text
+Administrador
+      │
+      ▼
+Cria usuário
+      │
+      ▼
+Usuário criado sem senha utilizável
+      │
+      ▼
+Geração de convite
+      │
+      ▼
+Token de ativação
+      │
+      ▼
+Usuário recebe convite
+      │
+      ▼
+POST /api/auth/activate/
+      │
+      ▼
+Define própria senha
+      │
+      ▼
+Conta ativada
+      │
+      ▼
+POST /api/auth/login/
+```
+
+O administrador não precisa conhecer a senha do usuário em nenhum momento.
+
+---
+
+## 🔑 Segurança dos tokens de convite
+
+Os tokens de ativação são gerados utilizando uma fonte criptograficamente segura de aleatoriedade.
+
+O token original **não é armazenado diretamente no banco de dados**.
+
+O fluxo utilizado é:
+
+```text
+Token original
+      │
+      ▼
+SHA-256
+      │
+      ▼
+Hash armazenado no banco
+```
+
+Quando o usuário tenta ativar a conta, o token recebido é novamente transformado em hash e comparado com o valor armazenado.
+
+Isso reduz o impacto de uma eventual exposição dos dados persistidos.
+
+Os convites possuem:
+
+* Token aleatório de alta entropia
+* Hash SHA-256 armazenado no banco
+* Prazo de validade de 24 horas
+* Uso único
+* Registro da data de utilização
+
+O modelo `UserInvitation` mantém:
+
+```text
+user
+token_hash
+expires_at
+used_at
+created_at
+```
+
+O token também não pode ser reutilizado depois da ativação.
+
+---
+
+## ⚙️ Service de convites
+
+A lógica de geração de convites foi isolada em um service específico:
+
+```text
+user/services/invitation.py
+```
+
+Esse service é responsável por:
+
+* Gerar o token
+* Gerar o hash do token
+* Definir o prazo de expiração
+* Criar o registro `UserInvitation`
+
+A separação dessa lógica evita que regras de segurança e geração de tokens fiquem diretamente nas views ou serializers.
+
+---
+
+## 🔓 Ativação de usuário
+
+A ativação também possui um service próprio:
+
+```text
+user/services/activation.py
+```
+
+O service é responsável por:
+
+1. Receber o token;
+2. Gerar o hash correspondente;
+3. Localizar o convite;
+4. Validar sua existência;
+5. Verificar se já foi utilizado;
+6. Verificar se está expirado;
+7. Definir a senha do usuário;
+8. Registrar `activated_at`;
+9. Registrar `used_at`.
+
+A operação utiliza uma transação atômica para garantir que a ativação seja realizada de forma consistente.
+
+Caso alguma etapa da operação falhe, as alterações realizadas dentro da transação são revertidas.
+
+---
+
+## 🔐 Regras de ativação
+
+Um convite somente pode ser utilizado quando:
+
+* O token é válido;
+* O convite ainda não foi utilizado;
+* O convite ainda não expirou.
+
+As situações são tratadas separadamente:
+
+```text
+Token inválido
+→ Convite inválido
+
+Token já utilizado
+→ Este convite já foi utilizado.
+
+Token expirado
+→ Este convite expirou.
+```
+
+O usuário define sua própria senha durante a ativação.
+
+A senha não é armazenada em texto puro. O Django realiza o armazenamento através do mecanismo de hashing de senhas do próprio framework.
+
+---
+
+## 🌐 Endpoint de ativação
+
+A ativação é disponibilizada através de:
+
+```text
+POST /api/auth/activate/
+```
+
+O endpoint não exige autenticação JWT, pois o usuário ainda não possui uma sessão autenticada durante o processo de ativação.
+
+### Requisição
+
+```json
+{
+    "token": "token-do-convite",
+    "password": "MinhaSenha123!"
+}
+```
+
+### Resposta
+
+```json
+{
+    "detail": "Usuário ativado com sucesso."
+}
+```
+
+O endpoint está documentado através do OpenAPI e disponível no Swagger.
+
+---
+
+# 👤 Clientes
 
 O cadastro de clientes possui uma regra de negócio que exige que o cliente possua pelo menos um meio de contato:
 
@@ -247,7 +474,7 @@ Essa abordagem preserva a integridade histórica dos dados.
 
 ---
 
-## 📖 Documentação da API
+# 📖 Documentação da API
 
 A API utiliza **OpenAPI** para geração automática da documentação.
 
@@ -265,9 +492,13 @@ O schema OpenAPI pode ser acessado através de:
 
 A documentação é gerada a partir dos endpoints e configurações da própria API, permitindo que a documentação acompanhe a evolução do backend.
 
+Os endpoints que possuem comportamentos específicos podem utilizar recursos do `drf-spectacular` para complementar a documentação automática.
+
+O endpoint de ativação de usuário, por exemplo, possui documentação explícita de seu request e response.
+
 ---
 
-## 🚗 Ordens de serviço
+# 🚗 Ordens de serviço
 
 A Ordem de Serviço é uma das principais entidades do sistema.
 
@@ -303,7 +534,7 @@ As transições de estado são controladas pelas regras de negócio e registrada
 
 ---
 
-## 📦 Controle de estoque
+# 📦 Controle de estoque
 
 O estoque diferencia:
 
@@ -326,7 +557,7 @@ O sistema também registra as reservas de peças associadas às ordens de servi�
 
 ---
 
-## 💰 Orçamentos e valores históricos
+# 💰 Orçamentos e valores históricos
 
 Valores comerciais importantes são preservados no momento em que uma operação é criada.
 
@@ -359,7 +590,7 @@ A OS continua utilizando o valor histórico de R$ 120,00.
 
 ---
 
-## 🧾 Histórico
+# 🧾 Histórico
 
 Operações importantes possuem rastreabilidade através de históricos.
 
@@ -384,7 +615,7 @@ O histórico é considerado imutável.
 
 ---
 
-## 🔒 Integridade dos dados
+# 🔒 Integridade dos dados
 
 O sistema prioriza a preservação de informações operacionais e comerciais.
 
@@ -402,7 +633,7 @@ Isso permite manter a rastreabilidade das operações mesmo após alterações p
 
 ---
 
-## 🧪 Testes
+# 🧪 Testes
 
 O projeto utiliza o sistema de testes do Django e Django REST Framework para validar as regras e comportamentos da API.
 
@@ -421,6 +652,42 @@ Atualmente existem testes automatizados para a API de clientes, cobrindo cenári
 * Desativação de clientes
 * Garantia de que registros desativados permanecem no banco
 
+Também existem testes relacionados ao fluxo de convite e ativação de usuários.
+
+### Convites
+
+Os testes cobrem:
+
+* Criação de convite
+* Geração de token
+* Armazenamento somente do hash
+* Validação do hash SHA-256
+* Prazo de expiração
+
+### Ativação
+
+Os testes cobrem:
+
+* Ativação com token válido
+* Token inválido
+* Convite expirado
+* Convite já utilizado
+* Garantia de uso único do convite
+* Definição da senha
+* Ativação do usuário
+* Registro de `activated_at`
+* Registro de `used_at`
+
+### Serializer de ativação
+
+Também existem testes para:
+
+* Token obrigatório
+* Senha obrigatória
+* Tamanho mínimo da senha
+* Dados válidos
+* Token inválido
+
 Para executar todos os testes:
 
 ```bash
@@ -437,7 +704,7 @@ A suíte de testes será ampliada conforme novas regras de negócio forem implem
 
 ---
 
-## 🔄 Integração contínua
+# 🔄 Integração contínua
 
 O projeto utiliza **GitLab CI/CD** para automatizar a execução dos testes.
 
@@ -477,22 +744,22 @@ PASS      FAIL
 Merge    Bloqueio
 ```
 
-O objetivo é utilizar o pipeline como **quality gate**, impedindo que alterações sejam incorporadas à branch principal enquanto a rotina automatizada de testes estiver falhando.
+O pipeline funciona como **quality gate**, impedindo que alterações sejam incorporadas à branch principal enquanto a rotina automatizada de testes estiver falhando.
 
 ---
 
-## 🐳 Ambiente de desenvolvimento
+# 🐳 Ambiente de desenvolvimento
 
 O projeto utiliza Docker para padronizar o ambiente de desenvolvimento.
 
-### Pré-requisitos
+## Pré-requisitos
 
 * Docker
 * Docker Compose
 * VS Code
 * Extensão Dev Containers
 
-### Configuração
+## Configuração
 
 Clone o repositório:
 
@@ -529,7 +796,7 @@ DEBUG=True
 
 ---
 
-## 🚀 Executando com Docker
+# 🚀 Executando com Docker
 
 Construa e inicialize os containers:
 
@@ -563,7 +830,7 @@ http://localhost:8000/api/docs/
 
 ---
 
-## 🧑‍💻 Dev Container
+# 🧑‍💻 Dev Container
 
 O projeto possui configuração para desenvolvimento através do VS Code Dev Containers.
 
@@ -573,7 +840,7 @@ Após abrir o projeto no VS Code:
 Ctrl + Shift + P
 ```
 
-selecione:
+Selecione:
 
 ```text
 Dev Containers: Reopen in Container
@@ -589,6 +856,7 @@ A estrutura interna será equivalente à raiz do projeto:
 
 ```text
 /workspace
+
 ├── .devcontainer/
 ├── backend/
 ├── docker/
@@ -605,9 +873,9 @@ O Django permanece localizado em:
 
 ---
 
-## 🗺️ Roadmap
+# 🗺️ Roadmap
 
-### Foundation
+## Foundation
 
 * [x] Docker
 * [x] PostgreSQL
@@ -621,30 +889,38 @@ O Django permanece localizado em:
 * [x] Autenticação JWT
 * [x] CI/CD completo
 
-### Usuários e autorização
+## Usuários e autorização
 
 * [x] Usuário customizado
 * [x] Autenticação por e-mail
 * [x] Grupos
 * [x] Permissões
 * [x] Estrutura de permissões por recurso/ação
+* [x] Fluxo de convite de ativação
+* [x] Token de convite com hash
+* [x] Expiração de convite
+* [x] Uso único de convite
+* [x] Endpoint de ativação de usuário
+* [x] Testes do fluxo de convite e ativação
+* [ ] Endpoint de gerenciamento de usuários
+* [ ] Reenvio de convite
 * [ ] Autorização completa por endpoint
 
-### Cadastros
+## Cadastros
 
 * [x] Clientes
 * [ ] Veículos
 * [ ] Serviços
 * [ ] Peças
 
-### Estoque
+## Estoque
 
 * [ ] Estoque físico
 * [ ] Estoque reservado
 * [ ] Movimentações
 * [ ] Alertas de estoque
 
-### Ordens de serviço
+## Ordens de serviço
 
 * [ ] Criação da OS
 * [ ] Orçamentos
@@ -657,21 +933,21 @@ O Django permanece localizado em:
 * [ ] Regularização
 * [ ] Entrega do veículo
 
-### Financeiro
+## Financeiro
 
 * [ ] Pagamentos
 * [ ] Múltiplas formas de pagamento
 * [ ] Abatimentos
 * [ ] Controle de saldo
 
-### Histórico
+## Histórico
 
 * [ ] Histórico da OS
 * [ ] Auditoria de alterações
 * [ ] Histórico de estoque
 * [ ] Histórico financeiro
 
-### Qualidade e entrega
+## Qualidade e entrega
 
 * [x] Testes automatizados
 * [x] Documentação OpenAPI
@@ -685,7 +961,7 @@ O Django permanece localizado em:
 
 ---
 
-## 📚 Documentação
+# 📚 Documentação
 
 A documentação geral do produto e suas decisões arquiteturais serão mantidas no repositório da organização.
 
@@ -695,7 +971,7 @@ Sistema de gerenciamento para oficinas mecânicas.
 
 ---
 
-## 👨‍💻 Desenvolvimento
+# 👨‍💻 Desenvolvimento
 
 Projeto desenvolvido por **Jean França** como projeto de portfólio e estudo de engenharia de software.
 

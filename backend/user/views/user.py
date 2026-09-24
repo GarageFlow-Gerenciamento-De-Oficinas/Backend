@@ -31,3 +31,4 @@ class UserViewSet(ModelViewSet):
             response_data,
             status=status.HTTP_201_CREATED,
         )
+

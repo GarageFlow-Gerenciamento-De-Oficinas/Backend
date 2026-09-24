@@ -19,6 +19,8 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from user.views import UserActivationView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -26,6 +28,8 @@ urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui",),
 
     path("api/auth/login/", TokenObtainPairView.as_view(), name="login"),
+    path("api/auth/activate/", UserActivationView.as_view(), name="activate",),
+    
     path("api/users/", include("user.urls")),
     path('api/clients/', include("client.urls"))
 ]

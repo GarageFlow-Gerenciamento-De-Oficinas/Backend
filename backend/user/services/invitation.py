@@ -12,9 +12,7 @@ def generate_invitation_token():
     return secrets.token_urlsafe(32)
 
 def hash_invitation_token(token):
-    return hashlib.sha256(
-        token.encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 def create_user_invitation(user):
     token = generate_invitation_token()
