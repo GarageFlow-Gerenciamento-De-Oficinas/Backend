@@ -909,7 +909,7 @@ O Django permanece localizado em:
 ## Cadastros
 
 * [x] Clientes
-* [ ] Veículos
+* [x] Veículos
 * [ ] Serviços
 * [ ] Peças
 
