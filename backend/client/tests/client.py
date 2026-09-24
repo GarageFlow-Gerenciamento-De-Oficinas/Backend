@@ -2,7 +2,7 @@ from backend.tests.base import AuthenticatedAPITestCase
 from rest_framework import status
 from django.urls import reverse
 
-from .models import Client
+from client.models import Client, Vehicle
 
 class ClientAPITestCase(AuthenticatedAPITestCase):
 
@@ -64,9 +64,23 @@ class ClientAPITestCase(AuthenticatedAPITestCase):
     def test_list_deactivated_clients(self):
         Client.objects.create(**self.client_data, active=False)
         url = reverse("client-list")
-        response = self.client.get(url, {"active": False})
+        response = self.client.get(url, {"show": "not_active"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+    def test_list_all_clients(self):
+        Client.objects.create(**self.client_data, active=False)
+        new_client = {
+            "name": "Julio da Silva",
+            "email": "julio@example.com",
+            "phone": "16999999999",
+            "address": "Rua das Flores, 123",
+        }
+        Client.objects.create(**new_client, active=True)
+        url = reverse("client-list")
+        response = self.client.get(url, {"show": "all"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
 
     def test_get_client(self):
         client = Client.objects.create(**self.client_data)
@@ -147,3 +161,20 @@ class ClientAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(
             Client.objects.filter(active=False).count(), 1
         )
+
+    def test_get_client_vehicle(self):
+        client = Client.objects.create(**self.client_data)
+        vehicle = Vehicle.objects.create(
+            client=client,
+            plate="abc1234",
+            brand="Toyota",
+            model="i30",
+            year=2020,
+            color="branco",
+            active=True
+        )
+        url = reverse("client-vehicles", kwargs={"pk": client.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)

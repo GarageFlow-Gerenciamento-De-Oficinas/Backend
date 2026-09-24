@@ -27,3 +27,26 @@ class Client(models.Model):
                 name = "unique_client_constraint"
             )
         ]
+
+class Vehicle(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, related_name="vehicles",)
+    plate = models.CharField(verbose_name="Placa do veiculo", max_length=7)
+    brand = models.CharField(verbose_name="Marca do veiculo", max_length=60)
+    model = models.CharField(verbose_name="Modelo do veiculo", max_length=60)
+    year = models.CharField(verbose_name="Ano do veiculo", max_length=4)
+    color = models.CharField(verbose_name="Cor do veiculo", max_length=30)
+    active = models.BooleanField(verbose_name="Veiculo ativo", default=True)
+    created_at = models.DateTimeField(verbose_name="Data de criação", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Ultima atualização", auto_now=True)
+
+    class Meta:
+        verbose_name = _("Veiculo")
+        verbose_name_plural = _("Veiculos")
+
+        constraints = [
+            models.UniqueConstraint(
+                fields= ["plate"],
+                condition=models.Q(active=True),
+                name = "unique_car_constraint"
+            )
+        ]
