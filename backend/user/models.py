@@ -70,4 +70,5 @@ class UserInvitation(models.Model):
     token_hash = models.CharField(max_length=64,)
     expires_at = models.DateTimeField()
     used_at = models.DateTimeField(null=True, blank=True,)
+    invalidated_at = models.DateTimeField(null=True, blank = True)
     created_at = models.DateTimeField(auto_now_add=True,)

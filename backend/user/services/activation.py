@@ -21,6 +21,9 @@ def activate_user(token: str, password: str) -> User:
     if invitation.used_at is not None:
         raise ActivationError("Este convite já foi utilizado.")
 
+    if invitation.invalidated_at is not None:
+        raise ActivationError("Este convite foi invalidado.")
+    
     if invitation.expires_at <= timezone.now():
         raise ActivationError("Este convite expirou.")
 

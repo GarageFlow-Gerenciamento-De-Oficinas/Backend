@@ -99,6 +99,25 @@ class UserActivationTestCase(TestCase):
         self.assertFalse(self.user.has_usable_password())
         self.assertIsNone(self.user.activated_at)
 
+    def test_activate_user_with_invalidated_invitation(self):
+        invitation, token = create_user_invitation(self.user)
+
+        invitation.invalidated_at = timezone.now()
+
+        
+        invitation.save(update_fields=["invalidated_at"])
+
+        with self.assertRaises(ActivationError) as context:
+            activate_user(
+                token=token,
+                password="NovaSenha123!",
+            )
+
+        self.assertEqual(
+            str(context.exception),
+            "Este convite foi invalidado.",
+        )
+
     def test_activation_token_can_only_be_used_once(self):
         password = "MinhaSenhaSegura123!"
 

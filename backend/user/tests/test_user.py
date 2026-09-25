@@ -172,7 +172,7 @@ class UserAPITestCase(AuthenticatedAPITestCase):
 
     def test_delete_user(self):
         user = User.objects.create_user(
-            email="julio@example.com",
+            email="test2@example.com",
             password = "testpassword123",
             address = "Rua das arvores, 123",
             phone = "16999999998",
