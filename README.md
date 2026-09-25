@@ -1,106 +1,149 @@
 # GarageFlow — Backend
 
-Backend do **GarageFlow**, sistema de gerenciamento desenvolvido para a **Oficina Mecânica Avenida**.
+Backend for **GarageFlow**, a workshop management system designed for **Oficina Mecânica Avenida**.
 
-O projeto tem como objetivo centralizar e organizar os processos operacionais de uma oficina mecânica, substituindo controles manuais realizados por papel, WhatsApp e planilhas.
+The project aims to centralize and organize the operational processes of an automotive repair shop, replacing fragmented workflows based on paper records, messaging applications, and spreadsheets.
 
----
-
-## 📌 Sobre o projeto
-
-O backend é responsável por fornecer a API e implementar as principais regras de negócio do sistema, incluindo:
-
-* Gerenciamento de usuários, grupos e permissões
-* Autenticação e autorização
-* Cadastro de clientes
-* Cadastro e gerenciamento de veículos
-* Catálogo de serviços
-* Catálogo de peças
-* Controle de estoque
-* Ordens de serviço
-* Orçamentos
-* Execução de serviços
-* Controle de peças utilizadas
-* Pagamentos e abatimentos
-* Histórico de alterações e eventos
-* Fluxos de interrupção e cancelamento
-* Controle de entrega dos veículos
-
-A aplicação foi projetada considerando a necessidade de preservar informações históricas e manter rastreabilidade das operações realizadas pelos usuários.
+GarageFlow is being developed as a portfolio project with a strong focus on business rules, data integrity, automated testing, CI/CD, and maintainable software architecture.
 
 ---
 
-## 🏗️ Arquitetura
+## 📌 About the Project
 
-O backend utiliza uma arquitetura baseada em Django, com PostgreSQL como banco de dados principal.
+The backend provides the REST API and implements the business rules required by the GarageFlow platform.
+
+The planned system includes:
+
+* User management
+* Groups and permissions
+* Authentication and authorization
+* Customer management
+* Vehicle management
+* Service catalog
+* Parts catalog
+* Inventory management
+* Service orders
+* Quotes
+* Service execution
+* Parts usage
+* Payments and adjustments
+* Operational history
+* Interruption and cancellation workflows
+* Vehicle delivery
+
+The application is designed around the principle that important operational and commercial information should remain traceable throughout its lifecycle.
+
+Instead of relying on physical deletion whenever possible, the system uses mechanisms such as status transitions, active/inactive states, historical records, and compensating operations.
+
+---
+
+# 🏗️ Architecture
+
+GarageFlow follows a Django-based backend architecture with PostgreSQL as its primary database.
 
 ```text
 ┌──────────────────────┐
 │       Frontend       │
-│         Vue.js       │
+│                      │
+│       Vue.js         │
 └──────────┬───────────┘
            │
-           │ HTTP / API
+           │ HTTP / JSON
            ▼
 ┌──────────────────────┐
 │       Backend        │
-│       Django         │
+│                      │
+│   Django + DRF       │
 │                      │
 │  ┌────────────────┐  │
-│  │ Regras negócio │  │
+│  │ Business Rules │  │
 │  └────────────────┘  │
 └──────────┬───────────┘
            │
+           │ Django ORM
            ▼
 ┌──────────────────────┐
 │     PostgreSQL       │
 └──────────────────────┘
 ```
 
-O ambiente de desenvolvimento é executado através de Docker e pode ser utilizado através do Dev Container do VS Code.
+The development environment runs through Docker and can also be used through the VS Code Dev Container.
 
-A aplicação separa responsabilidades entre diferentes camadas, mantendo regras de negócio mais complexas em **services**, enquanto serializers são responsáveis pela validação e transformação dos dados e views pela exposição dos endpoints HTTP.
+The backend separates responsibilities between API, validation, business logic, and persistence.
+
+The general request flow is:
+
+```text
+HTTP Request
+     │
+     ▼
+   View
+     │
+     ▼
+ Serializer
+     │
+     ▼
+  Service
+     │
+     ▼
+   Model
+     │
+     ▼
+PostgreSQL
+```
+
+Services are introduced when business logic becomes complex enough to benefit from being isolated from views and serializers.
+
+The project intentionally avoids unnecessary abstractions and favors explicit business rules.
 
 ---
 
-## 🛠️ Tecnologias
+# 🛠️ Technology Stack
 
-### Backend
+## Backend
 
 * Python
 * Django
 * Django REST Framework
 * PostgreSQL
-* Simple JWT
+* Django REST Framework Simple JWT
 * drf-spectacular
 
-### Infraestrutura
+## Infrastructure
 
 * Docker
 * Docker Compose
 * Dev Containers
 
-### Desenvolvimento
+## Development
 
 * Git
 * GitLab
+* GitHub
 * VS Code
+* pytest
+* pytest-django
 
-### Qualidade
+## Quality
 
-* Testes automatizados
+* Automated tests
 * CI/CD
-* OpenAPI / Swagger
+* OpenAPI
+* Swagger UI
 
 ---
 
-## 📁 Estrutura do projeto
+# 📁 Project Structure
 
 ```text
-Backend/
-
+garageflow/
+│
 ├── .devcontainer/
 │   └── devcontainer.json
+│
+├── .github/
+│   └── workflows/
+│       └── tests.yml
 │
 ├── backend/
 │   ├── backend/
@@ -121,8 +164,9 @@ Backend/
 │   │   ├── models.py
 │   │   ├── serializers/
 │   │   ├── services/
-│   │   │   ├── invitation.py
-│   │   │   └── activation.py
+│   │   │   ├── activation.py
+│   │   │   ├── email.py
+│   │   │   └── invitation.py
 │   │   ├── views/
 │   │   ├── urls.py
 │   │   └── tests/
@@ -136,21 +180,20 @@ Backend/
 ├── .gitignore
 ├── .gitlab-ci.yml
 ├── docker-compose.yml
+├── pytest.ini
 ├── README.md
 └── requirements.txt
 ```
 
-> O arquivo `.env` é utilizado localmente e não deve ser versionado.
+The `.env` file is used locally and must not be committed to the repository.
 
 ---
 
-# 🔐 Autenticação e autorização
+# 🔐 Authentication
 
-O sistema utiliza autenticação baseada em **JWT (JSON Web Token)**.
+GarageFlow uses JWT-based authentication through **Django REST Framework Simple JWT**.
 
-A autenticação utiliza o **Django REST Framework Simple JWT**.
-
-O usuário utiliza seu e-mail e senha para obter os tokens de autenticação através da API.
+Users authenticate using their email address and password.
 
 ## Login
 
@@ -158,18 +201,18 @@ O usuário utiliza seu e-mail e senha para obter os tokens de autenticação atr
 POST /api/auth/login/
 ```
 
-Exemplo de requisição:
+Example request:
 
 ```json
 {
-    "email": "usuario@email.com",
-    "password": "senha"
+    "email": "user@example.com",
+    "password": "password"
 }
 ```
 
-A API retorna um `access token` e um `refresh token`.
+The API returns an access token and a refresh token.
 
-O `access token` deve ser enviado nas requisições autenticadas através do header:
+The access token must be sent with authenticated requests using:
 
 ```text
 Authorization: Bearer <access_token>
@@ -177,652 +220,664 @@ Authorization: Bearer <access_token>
 
 ---
 
-# 👥 Usuários, grupos e permissões
+# 👤 User Management
 
-O sistema utiliza um modelo de autorização baseado em **grupos e permissões**.
+GarageFlow uses a custom Django user model based on `AbstractUser`.
 
-Os usuários podem pertencer a múltiplos grupos e suas permissões são determinadas pela união das permissões concedidas aos grupos dos quais participam.
+The `username` field is not used. Email is the unique authentication identifier.
 
-Os perfis inicialmente previstos são:
+Users currently contain information such as:
 
-* **Administrador**
-* **Atendente**
-* **Mecânico**
+* Email
+* Address
+* Phone
+* First name
+* Last name
+* Creation timestamp
+* Update timestamp
+* Activation timestamp
+* Active/inactive status
 
-As permissões são estruturadas considerando o recurso e a ação que o usuário está tentando executar.
+The system distinguishes between **activation** and **active status**.
 
-Exemplos:
+### Activated user
+
+An activated user has:
+
+* A defined password
+* An `activated_at` timestamp
+
+### Deactivated user
+
+The `is_active` field is used to prevent a user from authenticating after administrative deactivation.
+
+Deactivation does not physically remove the user from the database.
+
+---
+
+# ✉️ User Invitation and Activation
+
+New users are created without a usable password and receive an invitation to activate their accounts.
+
+The administrator never needs to define or know the user's password.
+
+The current flow is:
 
 ```text
-Recurso: Cliente
-Ação: visualizar
-
-Recurso: Cliente
-Ação: criar
-
-Recurso: Ordem de Serviço
-Ação: atualizar
-
-Recurso: Estoque
-Ação: movimentar
+Administrator
+      │
+      ▼
+Create User
+      │
+      ▼
+User created without usable password
+      │
+      ▼
+Create Invitation
+      │
+      ▼
+Generate secure token
+      │
+      ▼
+Send invitation email
+      │
+      ▼
+User activates account
+      │
+      ▼
+User defines password
+      │
+      ▼
+Account activated
+      │
+      ▼
+JWT Login
 ```
 
-Esse modelo permite que novas permissões sejam adicionadas sem depender exclusivamente de papéis fixos no código.
-
-A implementação da autorização específica por endpoint será realizada posteriormente através do sistema de permissões.
-
----
-
-# 👤 Usuários
-
-O GarageFlow utiliza um **User Model customizado**, baseado no `AbstractUser` do Django.
-
-O sistema utiliza o **e-mail como identificador de autenticação**, não utilizando o campo `username`.
-
-Os usuários possuem informações como:
-
-* E-mail
-* Endereço
-* Telefone
-* Data de criação
-* Data de atualização
-* Data de ativação
-* Status de atividade
-
-O modelo também diferencia dois conceitos importantes:
-
-### Usuário ativado
-
-O usuário possui uma senha definida e uma data registrada em `activated_at`.
-
-### Usuário desativado
-
-O campo `is_active` é utilizado para impedir o acesso de um usuário que foi administrativamente desativado.
-
-A criação de usuários foi projetada para não permitir que administradores definam ou conheçam a senha do usuário.
-
----
-
-## ✉️ Convites de ativação
-
-O cadastro de um usuário utiliza um fluxo baseado em **convite de ativação**.
-
-O fluxo previsto é:
+## Activation Endpoint
 
 ```text
-Administrador
-      │
-      ▼
-Cria usuário
-      │
-      ▼
-Usuário criado sem senha utilizável
-      │
-      ▼
-Geração de convite
-      │
-      ▼
-Token de ativação
-      │
-      ▼
-Usuário recebe convite
-      │
-      ▼
 POST /api/auth/activate/
-      │
-      ▼
-Define própria senha
-      │
-      ▼
-Conta ativada
-      │
-      ▼
-POST /api/auth/login/
 ```
 
-O administrador não precisa conhecer a senha do usuário em nenhum momento.
+Example request:
+
+```json
+{
+    "token": "invitation-token",
+    "password": "MyPassword123!"
+}
+```
+
+Successful response:
+
+```json
+{
+    "detail": "User activated successfully."
+}
+```
+
+The activation endpoint does not require JWT authentication because the user has not authenticated yet.
 
 ---
 
-## 🔑 Segurança dos tokens de convite
+# 🔑 Invitation Token Security
 
-Os tokens de ativação são gerados utilizando uma fonte criptograficamente segura de aleatoriedade.
+Invitation tokens are generated using a cryptographically secure source of randomness.
 
-O token original **não é armazenado diretamente no banco de dados**.
+The original token is never stored directly in the database.
 
-O fluxo utilizado é:
+The process is:
 
 ```text
-Token original
+Original Token
       │
       ▼
-SHA-256
+   SHA-256
       │
       ▼
-Hash armazenado no banco
+Token Hash
+      │
+      ▼
+Database
 ```
 
-Quando o usuário tenta ativar a conta, o token recebido é novamente transformado em hash e comparado com o valor armazenado.
+When the user activates the account, the received token is hashed again and compared against the stored hash.
 
-Isso reduz o impacto de uma eventual exposição dos dados persistidos.
+Each invitation has:
 
-Os convites possuem:
+* A cryptographically secure random token
+* A SHA-256 token hash
+* A 24-hour expiration period
+* A single-use restriction
+* A usage timestamp
+* An invalidation timestamp
+* A creation timestamp
 
-* Token aleatório de alta entropia
-* Hash SHA-256 armazenado no banco
-* Prazo de validade de 24 horas
-* Uso único
-* Registro da data de utilização
-
-O modelo `UserInvitation` mantém:
+The `UserInvitation` model contains:
 
 ```text
 user
 token_hash
 expires_at
 used_at
+invalidated_at
 created_at
 ```
 
-O token também não pode ser reutilizado depois da ativação.
+Invitation tokens are therefore treated as credentials and are not persisted in their original form.
 
 ---
 
-## ⚙️ Service de convites
+# 🔄 Invitation Resend
 
-A lógica de geração de convites foi isolada em um service específico:
-
-```text
-user/services/invitation.py
-```
-
-Esse service é responsável por:
-
-* Gerar o token
-* Gerar o hash do token
-* Definir o prazo de expiração
-* Criar o registro `UserInvitation`
-
-A separação dessa lógica evita que regras de segurança e geração de tokens fiquem diretamente nas views ou serializers.
-
----
-
-## 🔓 Ativação de usuário
-
-A ativação também possui um service próprio:
+Users who have not yet activated their accounts can receive a new invitation.
 
 ```text
-user/services/activation.py
+POST /api/auth/resend-invitation/
 ```
 
-O service é responsável por:
-
-1. Receber o token;
-2. Gerar o hash correspondente;
-3. Localizar o convite;
-4. Validar sua existência;
-5. Verificar se já foi utilizado;
-6. Verificar se está expirado;
-7. Definir a senha do usuário;
-8. Registrar `activated_at`;
-9. Registrar `used_at`.
-
-A operação utiliza uma transação atômica para garantir que a ativação seja realizada de forma consistente.
-
-Caso alguma etapa da operação falhe, as alterações realizadas dentro da transação são revertidas.
-
----
-
-## 🔐 Regras de ativação
-
-Um convite somente pode ser utilizado quando:
-
-* O token é válido;
-* O convite ainda não foi utilizado;
-* O convite ainda não expirou.
-
-As situações são tratadas separadamente:
-
-```text
-Token inválido
-→ Convite inválido
-
-Token já utilizado
-→ Este convite já foi utilizado.
-
-Token expirado
-→ Este convite expirou.
-```
-
-O usuário define sua própria senha durante a ativação.
-
-A senha não é armazenada em texto puro. O Django realiza o armazenamento através do mecanismo de hashing de senhas do próprio framework.
-
----
-
-## 🌐 Endpoint de ativação
-
-A ativação é disponibilizada através de:
-
-```text
-POST /api/auth/activate/
-```
-
-O endpoint não exige autenticação JWT, pois o usuário ainda não possui uma sessão autenticada durante o processo de ativação.
-
-### Requisição
+Example request:
 
 ```json
 {
-    "token": "token-do-convite",
-    "password": "MinhaSenha123!"
+    "email": "user@example.com"
 }
 ```
 
-### Resposta
+The resend process is:
 
-```json
-{
-    "detail": "Usuário ativado com sucesso."
-}
+```text
+Existing Invitation
+        │
+        ▼
+Invalidate Previous Invitation
+        │
+        ▼
+Create New Invitation
+        │
+        ▼
+Generate New Token
+        │
+        ▼
+Send Email
 ```
 
-O endpoint está documentado através do OpenAPI e disponível no Swagger.
+Previous invitations are not deleted.
+
+Instead, they are marked with `invalidated_at`, preserving the invitation history.
+
+The public API uses a generic response regardless of whether the email belongs to an eligible user.
+
+This prevents the endpoint from exposing whether a specific email address is registered or already activated.
 
 ---
 
-# 👤 Clientes
+# ⚙️ Invitation Services
 
-O cadastro de clientes possui uma regra de negócio que exige que o cliente possua pelo menos um meio de contato:
-
-* E-mail
-* Telefone
-
-Um cliente não pode ser fisicamente excluído do banco de dados.
-
-Quando um cliente deixa de ser utilizado, seu registro é **desativado**, preservando os dados históricos.
-
-O modelo utiliza o campo:
+Invitation-related business logic is isolated in:
 
 ```text
-is_active
+backend/user/services/invitation.py
 ```
 
-A API utiliza o seguinte comportamento:
+The service is responsible for:
+
+* Generating invitation tokens
+* Hashing tokens
+* Creating invitations
+* Defining expiration
+* Invalidating previous invitations
+* Resending invitations
+
+Email delivery is handled separately by:
 
 ```text
-GET /api/clients/
+backend/user/services/email.py
 ```
 
-Retorna somente clientes ativos.
-
-Para consultar clientes ativos:
-
-```text
-GET /api/clients/?is_active=true
-```
-
-Para consultar clientes inativos:
-
-```text
-GET /api/clients/?is_active=false
-```
-
-Uma requisição `DELETE` não remove fisicamente o registro. Ela apenas altera o cliente para inativo.
-
-Essa abordagem preserva a integridade histórica dos dados.
+This keeps token management and email delivery as separate responsibilities.
 
 ---
 
-# 📖 Documentação da API
+# 🔓 Activation Service
 
-A API utiliza **OpenAPI** para geração automática da documentação.
-
-A interface **Swagger** está disponível em:
+Account activation logic is isolated in:
 
 ```text
-/api/docs/
+backend/user/services/activation.py
 ```
 
-O schema OpenAPI pode ser acessado através de:
+The service is responsible for:
 
-```text
-/api/schema/
-```
+1. Receiving the invitation token.
+2. Hashing the received token.
+3. Locating the invitation.
+4. Validating the invitation.
+5. Checking whether it has already been used.
+6. Checking whether it has been invalidated.
+7. Checking whether it has expired.
+8. Setting the user's password.
+9. Setting `activated_at`.
+10. Marking the invitation as used.
 
-A documentação é gerada a partir dos endpoints e configurações da própria API, permitindo que a documentação acompanhe a evolução do backend.
+The activation operation is atomic.
 
-Os endpoints que possuem comportamentos específicos podem utilizar recursos do `drf-spectacular` para complementar a documentação automática.
-
-O endpoint de ativação de usuário, por exemplo, possui documentação explícita de seu request e response.
+If an error occurs during the operation, database changes performed within the transaction are rolled back.
 
 ---
 
-# 🚗 Ordens de serviço
+# 🔒 Activation Rules
 
-A Ordem de Serviço é uma das principais entidades do sistema.
+An invitation can only be used when:
 
-O fluxo operacional previsto inclui:
+* The token exists.
+* The invitation has not been used.
+* The invitation has not been invalidated.
+* The invitation has not expired.
+
+These conditions are handled separately so the system can distinguish between different invalid invitation states internally.
+
+Passwords are never stored as plain text. Django's password hashing mechanism is responsible for securely storing user passwords.
+
+---
+
+# 👥 Groups and Permissions
+
+GarageFlow is planned to use a role and permission system based on groups and granular permissions.
+
+Users will be able to belong to multiple groups, and their effective permissions will be determined by the permissions granted through those groups.
+
+The initial business roles are planned as:
+
+* Administrator
+* Attendant
+* Mechanic
+
+Permissions are modeled around resources and actions.
+
+Examples:
 
 ```text
-Aguardando avaliação
+Resource: Customer
+Action: View
+
+Resource: Customer
+Action: Create
+
+Resource: Service Order
+Action: Update
+
+Resource: Inventory
+Action: Move
+```
+
+The permission model is designed to allow new permissions to be introduced without relying exclusively on hard-coded roles.
+
+The full authorization system is planned for a later development stage.
+
+---
+
+# 👤 Customers
+
+Customer management is currently implemented as part of the backend.
+
+Customers use `is_active` to represent their active status.
+
+Important customer records are not physically deleted.
+
+When a customer is no longer active, the record is deactivated while historical information remains available.
+
+The customer API supports active/inactive filtering.
+
+The system also enforces customer contact requirements according to the implemented validation rules.
+
+Vehicles are associated with customers and remain part of the customer domain rather than being treated as an independent application.
+
+---
+
+# 🚗 Service Orders
+
+Service Orders are one of the central business entities of GarageFlow.
+
+The planned operational lifecycle is:
+
+```text
+Awaiting Evaluation
         ↓
-Orçamento aguardando aprovação
+Quote Awaiting Approval
         ↓
-Orçamento aprovado
+Quote Approved
         ↓
-Serviço em execução
+Service In Progress
         ↓
-Em testes
+Testing
         ↓
-Serviço finalizado
+Service Completed
         ↓
-Pagamento efetuado
+Payment Completed
         ↓
-Veículo entregue
+Vehicle Delivered
 ```
 
-Além do fluxo normal, existem fluxos específicos para:
+The workflow also supports business scenarios such as:
 
-* Cancelamento
-* Interrupção
-* Regularização
-* Ordens de serviço complementares
-* Reexecução de serviços após falha em testes
+* Cancellation
+* Interruption
+* Regularization
+* Complementary service orders
+* Rework after failed testing
 
-As transições de estado são controladas pelas regras de negócio e registradas no histórico da ordem.
+Service Order transitions are governed by business rules and are intended to be recorded in the service order history.
 
 ---
 
-# 📦 Controle de estoque
+# 📦 Inventory
 
-O estoque diferencia:
+The inventory domain is designed around historical stock movements.
 
-* Estoque físico
-* Estoque reservado
-* Estoque disponível
-* Estoque de segurança
+The system distinguishes between:
 
-O estoque disponível é calculado considerando as quantidades já reservadas para ordens de serviço.
+* Physical stock
+* Reserved stock
+* Available stock
+* Safety stock
+
+Available stock is calculated as:
 
 ```text
-Disponível = Estoque físico - Estoque reservado
+Available Stock = Physical Stock - Reserved Stock
 ```
 
-As movimentações de estoque são históricas e não devem ser simplesmente apagadas.
+Stock movements are treated as historical records.
 
-Correções são realizadas através de novas movimentações compensatórias, preservando a rastreabilidade.
+Corrections should be represented through new compensating movements rather than deleting historical movements.
 
-O sistema também registra as reservas de peças associadas às ordens de serviço.
+Parts reserved for Service Orders are also tracked separately from physical stock.
 
 ---
 
-# 💰 Orçamentos e valores históricos
+# 💰 Quotes and Historical Values
 
-Valores comerciais importantes são preservados no momento em que uma operação é criada.
+Commercial values must remain historically consistent.
 
-Isso inclui:
+When an operation records a service or part price, the value used by that operation should not change simply because the catalog is updated later.
 
-* Preço do serviço
-* Preço da peça
-* Custo da peça
-* Quantidade aprovada
-* Valores de orçamento
-* Quantidades efetivamente utilizadas
-* Pagamentos
-* Abatimentos
-
-Dessa forma, uma alteração futura no catálogo não modifica informações de operações antigas.
-
-Por exemplo:
+For example:
 
 ```text
-Preço atual da peça: R$ 150,00
+Current Part Price: R$ 150.00
 
-OS criada:
-Preço registrado na OS: R$ 120,00
+Service Order Created:
+Recorded Price: R$ 120.00
 
-Preço posteriormente alterado:
-R$ 150,00
+Catalog Price Updated:
+R$ 150.00
 ```
 
-A OS continua utilizando o valor histórico de R$ 120,00.
+The existing Service Order continues to use:
+
+```text
+R$ 120.00
+```
+
+This principle applies to relevant service, part, quote, payment, and operational values.
 
 ---
 
-# 🧾 Histórico
+# 🧾 History and Auditability
 
-Operações importantes possuem rastreabilidade através de históricos.
+GarageFlow is designed to preserve an operational history of important business events.
 
-O histórico de uma Ordem de Serviço pode registrar:
+Service Order history is planned to record events such as:
 
-* Alterações de status
-* Alterações de dados
-* Criação e alterações de orçamento
-* Comentários
-* Comunicação com cliente
-* Responsabilidade por serviços
-* Início da execução
-* Falhas em testes
-* Abatimentos
-* Cancelamentos
-* Interrupções
-* Eventos relacionados à execução
+* Status changes
+* Data changes
+* Quote changes
+* Comments
+* Customer communication
+* Service execution
+* Testing results
+* Adjustments
+* Cancellations
+* Interruptions
+* Other relevant operational events
 
-Cada evento possui o usuário responsável e o momento em que ocorreu.
-
-O histórico é considerado imutável.
+Historical records are intended to remain immutable after creation.
 
 ---
 
-# 🔒 Integridade dos dados
+# 🔒 Data Integrity
 
-O sistema prioriza a preservação de informações operacionais e comerciais.
+The system prioritizes the preservation of operational and commercial information.
 
-Entidades importantes não são fisicamente removidas quando isso poderia comprometer o histórico.
+Important entities should not be physically deleted when doing so could compromise historical information.
 
-Em vez disso, são utilizados mecanismos como:
+Depending on the domain, the system uses mechanisms such as:
 
-* Status
-* Flags de ativo/inativo
-* Cancelamentos
-* Movimentações compensatórias
-* Históricos
+* Active/inactive states
+* Status transitions
+* Cancellation states
+* Compensating movements
+* Historical records
+* Timestamps
 
-Isso permite manter a rastreabilidade das operações mesmo após alterações posteriores.
+The objective is to maintain traceability throughout the lifecycle of the data.
 
 ---
 
-# 🧪 Testes
+# 📖 API Documentation
 
-O projeto utiliza o sistema de testes do Django e Django REST Framework para validar as regras e comportamentos da API.
+The API uses **OpenAPI** through `drf-spectacular`.
 
-Atualmente existem testes automatizados para a API de clientes, cobrindo cenários como:
+Swagger UI is available at:
 
-* Criação de cliente válido
-* Validação de dados obrigatórios
-* Validação de contato
-* Tentativa de cadastro duplicado
-* Listagem
-* Consulta individual
-* Atualização
-* Atualização com dados inválidos
-* Consulta de clientes ativos
-* Consulta de clientes inativos
-* Desativação de clientes
-* Garantia de que registros desativados permanecem no banco
+```text
+http://localhost:8000/api/docs/
+```
 
-Também existem testes relacionados ao fluxo de convite e ativação de usuários.
+The OpenAPI schema is available at:
 
-### Convites
+```text
+http://localhost:8000/api/schema/
+```
 
-Os testes cobrem:
+API documentation is generated from the backend configuration and endpoint definitions.
 
-* Criação de convite
-* Geração de token
-* Armazenamento somente do hash
-* Validação do hash SHA-256
-* Prazo de expiração
+Specific endpoints can use `drf-spectacular` annotations to provide additional request, response, and business context.
 
-### Ativação
+---
 
-Os testes cobrem:
+# 🧪 Testing
 
-* Ativação com token válido
-* Token inválido
-* Convite expirado
-* Convite já utilizado
-* Garantia de uso único do convite
-* Definição da senha
-* Ativação do usuário
-* Registro de `activated_at`
-* Registro de `used_at`
+Automated tests are an integral part of the project.
 
-### Serializer de ativação
+The backend uses:
 
-Também existem testes para:
+* pytest
+* pytest-django
+* Django REST Framework testing utilities
 
-* Token obrigatório
-* Senha obrigatória
-* Tamanho mínimo da senha
-* Dados válidos
-* Token inválido
+Tests cover both API behavior and business services.
 
-Para executar todos os testes:
+Current test coverage includes customer management and the complete user invitation and activation flow.
+
+## User and Invitation Tests
+
+The invitation flow includes tests for:
+
+* User creation
+* Invitation creation
+* Token generation
+* Token hashing
+* SHA-256 hash validation
+* Invitation expiration
+* Invitation invalidation
+* Single-use invitation enforcement
+* Invitation resend
+* Email delivery
+
+## Account Activation Tests
+
+The activation flow includes tests for:
+
+* Valid activation
+* Invalid tokens
+* Expired invitations
+* Used invitations
+* Invalidated invitations
+* Password validation
+* Password definition
+* User activation
+* `activated_at`
+* `used_at`
+* Authentication after activation
+
+## API Tests
+
+API tests cover:
+
+* User creation
+* User retrieval
+* User updates
+* User deactivation
+* Active/inactive filtering
+* Invitation activation
+* Invitation resend
+* Invalid email input
+* Unknown email addresses
+* Already activated users
+
+Run the complete test suite with:
 
 ```bash
-python manage.py test
+pytest
 ```
-
-Ou utilizando Docker:
-
-```bash
-docker compose exec web python manage.py test
-```
-
-A suíte de testes será ampliada conforme novas regras de negócio forem implementadas.
 
 ---
 
-# 🔄 Integração contínua
+# 🔄 CI/CD
 
-O projeto utiliza **GitLab CI/CD** para automatizar a execução dos testes.
+GarageFlow uses automated CI/CD pipelines to validate changes.
 
-O pipeline é definido através do arquivo:
+The project currently includes CI configurations for GitLab and GitHub.
 
-```text
-.gitlab-ci.yml
-```
-
-A rotina de CI prepara um ambiente isolado contendo Python e PostgreSQL, instala as dependências do projeto, executa as migrations e executa a suíte completa de testes.
-
-Fluxo previsto:
+The test suite acts as a quality gate for merge requests.
 
 ```text
 Feature Branch
-      ↓
-   Commit
-      ↓
-    Push
-      ↓
+      │
+      ▼
+    Commit
+      │
+      ▼
+     Push
+      │
+      ▼
 Merge Request
-      ↓
- GitLab CI/CD
-      ↓
- Instala dependências
-      ↓
- PostgreSQL
-      ↓
-    Migrations
-      ↓
- Testes automatizados
-      ↓
- ┌────┴────┐
- ↓         ↓
-PASS      FAIL
- ↓         ↓
-Merge    Bloqueio
+      │
+      ▼
+Automated CI
+      │
+      ▼
+Install Dependencies
+      │
+      ▼
+Database Setup
+      │
+      ▼
+Run Tests
+      │
+   ┌──┴──┐
+   ▼     ▼
+ PASS   FAIL
+   │     │
+   ▼     ▼
+Merge  Blocked
+Allowed
 ```
 
-O pipeline funciona como **quality gate**, impedindo que alterações sejam incorporadas à branch principal enquanto a rotina automatizada de testes estiver falhando.
+A merge request must pass the automated test suite before being merged.
+
+This quality gate is intended to prevent regressions from reaching the main development branch.
 
 ---
 
-# 🐳 Ambiente de desenvolvimento
+# 🐳 Development Environment
 
-O projeto utiliza Docker para padronizar o ambiente de desenvolvimento.
+GarageFlow uses Docker to provide a consistent development environment.
 
-## Pré-requisitos
+## Requirements
 
 * Docker
 * Docker Compose
 * VS Code
-* Extensão Dev Containers
+* Dev Containers extension
 
-## Configuração
+## Configuration
 
-Clone o repositório:
+Clone the repository:
 
 ```bash
 git clone <repository-url>
 
-cd Backend
+cd garageflow
 ```
 
-Crie o arquivo `.env` a partir do exemplo:
+Create the local environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Configure as variáveis necessárias.
+Configure the required environment variables.
 
-Exemplo:
+Example:
 
 ```env
 POSTGRES_DB=garageflow
 POSTGRES_USER=garageflow
-POSTGRES_PASSWORD=sua_senha
+POSTGRES_PASSWORD=your_password
 
 DB_NAME=garageflow
 DB_USER=garageflow
-DB_PASSWORD=sua_senha
+DB_PASSWORD=your_password
 DB_HOST=db
 DB_PORT=5432
 
-SECRET_KEY=sua-secret-key
+SECRET_KEY=your-secret-key
 DEBUG=True
 ```
 
 ---
 
-# 🚀 Executando com Docker
+# 🚀 Running with Docker
 
-Construa e inicialize os containers:
+Build and start the development environment:
 
 ```bash
 docker compose up --build
 ```
 
-O backend estará disponível em:
+The backend will be available at:
 
 ```text
 http://localhost:8000
 ```
 
-Para executar as migrations:
+Run migrations with:
 
 ```bash
 docker compose exec web python manage.py migrate
 ```
 
-Para executar os testes:
+Run the test suite with:
 
 ```bash
-docker compose exec web python manage.py test
+docker compose exec web pytest
 ```
 
-A documentação Swagger estará disponível em:
+Swagger UI:
 
 ```text
 http://localhost:8000/api/docs/
@@ -832,40 +887,27 @@ http://localhost:8000/api/docs/
 
 # 🧑‍💻 Dev Container
 
-O projeto possui configuração para desenvolvimento através do VS Code Dev Containers.
+The project includes a VS Code Dev Container configuration.
 
-Após abrir o projeto no VS Code:
+After opening the project in VS Code, use:
 
 ```text
 Ctrl + Shift + P
 ```
 
-Selecione:
+Then select:
 
 ```text
 Dev Containers: Reopen in Container
 ```
 
-O workspace será aberto dentro do container em:
+The workspace is available inside the container at:
 
 ```text
 /workspace
 ```
 
-A estrutura interna será equivalente à raiz do projeto:
-
-```text
-/workspace
-
-├── .devcontainer/
-├── backend/
-├── docker/
-├── .env
-├── docker-compose.yml
-└── ...
-```
-
-O Django permanece localizado em:
+The Django project is located at:
 
 ```text
 /workspace/backend
@@ -881,108 +923,137 @@ O Django permanece localizado em:
 * [x] PostgreSQL
 * [x] Django
 * [x] Django REST Framework
-* [x] Variáveis de ambiente
+* [x] Environment variables
 * [x] Dev Container
 * [x] Git
-* [x] Estrutura inicial das aplicações
-* [x] Swagger / OpenAPI
-* [x] Autenticação JWT
-* [x] CI/CD completo
+* [x] Initial application structure
+* [x] OpenAPI / Swagger
+* [x] JWT authentication
+* [x] CI/CD quality gate
 
-## Usuários e autorização
+## Users and Authorization
 
-* [x] Usuário customizado
-* [x] Autenticação por e-mail
-* [x] Grupos
-* [x] Permissões
-* [x] Estrutura de permissões por recurso/ação
-* [x] Fluxo de convite de ativação
-* [x] Token de convite com hash
-* [x] Expiração de convite
-* [x] Uso único de convite
-* [x] Endpoint de ativação de usuário
-* [x] Testes do fluxo de convite e ativação
-* [ ] Endpoint de gerenciamento de usuários
-* [ ] Reenvio de convite
-* [ ] Autorização completa por endpoint
+* [x] Custom user model
+* [x] Email-based authentication
+* [x] User management API
+* [x] User activation flow
+* [x] Invitation system
+* [x] Invitation token hashing
+* [x] Invitation expiration
+* [x] Single-use invitations
+* [x] Invitation invalidation
+* [x] Invitation resend
+* [x] Invitation email service
+* [x] Activation API
+* [x] Tests for invitation and activation flows
+* [ ] User groups
+* [ ] Permissions
+* [ ] Resource/action permission model
+* [ ] Endpoint-level authorization
 
-## Cadastros
+## Customers and Vehicles
 
-* [x] Clientes
-* [x] Veículos
-* [ ] Serviços
-* [ ] Peças
+* [x] Customer management
+* [x] Customer deactivation
+* [x] Vehicle management
+* [ ] Customer document support
 
-## Estoque
+## Catalogs
 
-* [ ] Estoque físico
-* [ ] Estoque reservado
-* [ ] Movimentações
-* [ ] Alertas de estoque
+* [ ] Service catalog
+* [ ] Parts catalog
 
-## Ordens de serviço
+## Inventory
 
-* [ ] Criação da OS
-* [ ] Orçamentos
-* [ ] Itens de serviço
-* [ ] Peças utilizadas
-* [ ] Execução
-* [ ] Testes
-* [ ] Interrupção
-* [ ] Cancelamento
-* [ ] Regularização
-* [ ] Entrega do veículo
+* [ ] Physical stock
+* [ ] Reserved stock
+* [ ] Available stock calculation
+* [ ] Stock movements
+* [ ] Safety stock
+* [ ] Inventory alerts
 
-## Financeiro
+## Service Orders
 
-* [ ] Pagamentos
-* [ ] Múltiplas formas de pagamento
-* [ ] Abatimentos
-* [ ] Controle de saldo
+* [ ] Service Order creation
+* [ ] Service Order lifecycle
+* [ ] Quotes
+* [ ] Service Order items
+* [ ] Parts usage
+* [ ] Service execution
+* [ ] Testing
+* [ ] Interruption
+* [ ] Cancellation
+* [ ] Regularization
+* [ ] Complementary Service Orders
+* [ ] Vehicle delivery
 
-## Histórico
+## Finance
 
-* [ ] Histórico da OS
-* [ ] Auditoria de alterações
-* [ ] Histórico de estoque
-* [ ] Histórico financeiro
+* [ ] Payments
+* [ ] Multiple payment methods
+* [ ] Adjustments
+* [ ] Balance management
 
-## Qualidade e entrega
+## History
 
-* [x] Testes automatizados
-* [x] Documentação OpenAPI
+* [ ] Service Order history
+* [ ] Audit trail
+* [ ] Inventory history
+* [ ] Financial history
+
+## Quality and Delivery
+
+* [x] Automated tests
+* [x] OpenAPI documentation
 * [x] Swagger UI
-* [x] Pipeline inicial de CI
-* [x] Pipeline obrigatório para Merge Requests
-* [ ] Lint
-* [ ] Relatório de cobertura de testes
-* [ ] Build automatizado
-* [ ] Deploy automatizado
+* [x] CI pipeline
+* [x] Merge request quality gate
+* [ ] Linting
+* [ ] Test coverage reporting
+* [ ] Automated build
+* [ ] Automated deployment
+
+## Frontend
+
+* [ ] Vue.js application
+* [ ] Authentication interface
+* [ ] User management interface
+* [ ] Customer management
+* [ ] Vehicle management
+* [ ] Service Order workflow
+* [ ] Inventory management
+* [ ] Financial management
 
 ---
 
-# 📚 Documentação
+# 📚 Documentation
 
-A documentação geral do produto e suas decisões arquiteturais serão mantidas no repositório da organização.
+The project documentation is maintained alongside the source code in this repository.
 
-**GarageFlow**
+As the system grows, additional documentation will be introduced for:
 
-Sistema de gerenciamento para oficinas mecânicas.
+* Architecture
+* Domain rules
+* API behavior
+* Architectural decisions
+* Development practices
+
+The README currently serves as the primary project documentation.
 
 ---
 
-# 👨‍💻 Desenvolvimento
+# 👨‍💻 Development
 
-Projeto desenvolvido por **Jean França** como projeto de portfólio e estudo de engenharia de software.
+GarageFlow is being developed by **Jean França** as a portfolio and software engineering project.
 
-O objetivo é demonstrar não apenas conhecimento de tecnologias, mas também capacidade de:
+The project is intended to demonstrate not only knowledge of specific technologies, but also the ability to:
 
-* Modelar regras de negócio
-* Projetar sistemas
-* Desenvolver APIs
-* Implementar autenticação e autorização
-* Preservar integridade de dados
-* Criar testes automatizados
-* Documentar APIs
-* Aplicar práticas de integração contínua
-* Construir uma aplicação completa
+* Model complex business rules
+* Design maintainable systems
+* Develop REST APIs
+* Implement authentication and authorization
+* Preserve historical data integrity
+* Build automated tests
+* Document APIs
+* Implement CI/CD practices
+* Develop a complete software product incrementally
