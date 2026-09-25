@@ -1,0 +1,4 @@
+from .test_invitation import UserInvitationTestCase
+from .test_user import UserAPITestCase
+from .test_activation import UserActivationTestCase
+from .test_activation_serializer import UserActivationSerializerTestCase

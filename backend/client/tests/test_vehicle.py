@@ -73,7 +73,7 @@ class VehicleAPITestCase(AuthenticatedAPITestCase):
 
     def test_create_vehicle_with_plate_from_deactivated_vehicle(self):
         data = self.vehicle_data.copy()
-        data["active"] = False
+        data["is_active"] = False
 
         Vehicle.objects.create(**data)
 
@@ -97,14 +97,14 @@ class VehicleAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(len(response.data), 1)
 
     def test_list_deactivated_vehicles(self):
-        Vehicle.objects.create(**self.vehicle_data, active=False)
+        Vehicle.objects.create(**self.vehicle_data, is_active=False)
         url = reverse("vehicle-list")
         response = self.client.get(url, {"show": "not_active"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
     def test_list_all_vehicles(self):
-        Vehicle.objects.create(**self.vehicle_data, active=False)
+        Vehicle.objects.create(**self.vehicle_data, is_active=False)
         new_vehicle = {
             "client": self.client_info,
             "plate":"ABC1235",
@@ -113,7 +113,7 @@ class VehicleAPITestCase(AuthenticatedAPITestCase):
             "year":"2020",
             "color":"branco"
         }
-        Vehicle.objects.create(**new_vehicle, active=True)
+        Vehicle.objects.create(**new_vehicle, is_active=True)
         url = reverse("vehicle-list")
         response = self.client.get(url, {"show": "all"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -202,7 +202,7 @@ class VehicleAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         vehicle.refresh_from_db()
         self.assertEqual(
-            Vehicle.objects.filter(active=False).count(), 1
+            Vehicle.objects.filter(is_active=False).count(), 1
         )
 
     def test_transfer_vehicle_to_new_client(self):
@@ -218,8 +218,8 @@ class VehicleAPITestCase(AuthenticatedAPITestCase):
         )
 
         # Desativa o veículo do proprietário antigo
-        vehicle.active = False
-        vehicle.save(update_fields=["active"])
+        vehicle.is_active = False
+        vehicle.save(update_fields=["is_active"])
 
         # Cria o novo registro para o novo proprietário
         new_vehicle_payload = {
@@ -229,7 +229,6 @@ class VehicleAPITestCase(AuthenticatedAPITestCase):
             "model": vehicle.model,
             "year": vehicle.year,
             "color": vehicle.color,
-            "active": True,
         }
 
         url = reverse("vehicle-list")
@@ -249,18 +248,18 @@ class VehicleAPITestCase(AuthenticatedAPITestCase):
 
         self.assertEqual(old_vehicle.client, self.client_info)
 
-        self.assertFalse(old_vehicle.active)
+        self.assertFalse(old_vehicle.is_active)
 
         # O novo registro pertence ao novo proprietário
         new_vehicle = Vehicle.objects.get(
             client=new_client,
             plate=vehicle.plate,
-            active=True,
+            is_active=True,
         )
 
         self.assertEqual(new_vehicle.client, new_client)
 
-        self.assertTrue(new_vehicle.active)
+        self.assertTrue(new_vehicle.is_active)
 
         # Os dois registros representam o mesmo veículo
         self.assertEqual(new_vehicle.plate, old_vehicle.plate)

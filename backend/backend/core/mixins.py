@@ -1,7 +1,10 @@
-class ActiveStatusFilterMixin:
-    active_field = "active"
+from django.db.models import QuerySet
 
-    def filter_by_active_status(self, queryset):
+
+class ActiveStatusFilterMixin:
+    active_field = "is_active"
+
+    def filter_by_active_status(self, queryset: QuerySet) -> QuerySet:
         show = self.request.query_params.get("show")
 
         if show is None:

@@ -17,6 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from user.views.resend_invitation import ResendInvitationView
+from user.views import UserActivationView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,6 +28,14 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name="schema"),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui",),
 
-    path("api/auth/", include("user.urls")),
+    path("api/auth/login/", TokenObtainPairView.as_view(), name="login"),
+    path("api/auth/activate/", UserActivationView.as_view(), name="activate",),
+    path(
+        "api/auth/resend-invitation/",
+        ResendInvitationView.as_view(),
+        name="resend-invitation",
+    ),
+
+    path("api/users/", include("user.urls")),
     path('api/clients/', include("client.urls"))
 ]

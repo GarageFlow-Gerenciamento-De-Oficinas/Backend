@@ -62,21 +62,21 @@ class ClientAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(len(response.data), 1)
 
     def test_list_deactivated_clients(self):
-        Client.objects.create(**self.client_data, active=False)
+        Client.objects.create(**self.client_data, is_active=False)
         url = reverse("client-list")
         response = self.client.get(url, {"show": "not_active"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
     def test_list_all_clients(self):
-        Client.objects.create(**self.client_data, active=False)
+        Client.objects.create(**self.client_data, is_active=False)
         new_client = {
             "name": "Julio da Silva",
             "email": "julio@example.com",
             "phone": "16999999999",
             "address": "Rua das Flores, 123",
         }
-        Client.objects.create(**new_client, active=True)
+        Client.objects.create(**new_client, is_active=True)
         url = reverse("client-list")
         response = self.client.get(url, {"show": "all"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -159,7 +159,7 @@ class ClientAPITestCase(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         client.refresh_from_db()
         self.assertEqual(
-            Client.objects.filter(active=False).count(), 1
+            Client.objects.filter(is_active=False).count(), 1
         )
 
     def test_get_client_vehicle(self):
@@ -170,8 +170,7 @@ class ClientAPITestCase(AuthenticatedAPITestCase):
             brand="Toyota",
             model="i30",
             year=2020,
-            color="branco",
-            active=True
+            color="branco"
         )
         url = reverse("client-vehicles", kwargs={"pk": client.id})
         response = self.client.get(url)
