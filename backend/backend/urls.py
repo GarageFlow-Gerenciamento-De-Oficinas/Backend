@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from user.views.auth import LoginView, RefreshTokenView
+from user.views.auth import LoginView, RefreshTokenView, LogoutView, CSRFTokenView
 from user.views.resend_invitation import ResendInvitationView
 from user.views import UserActivationView
 
@@ -30,6 +30,8 @@ urlpatterns = [
 
     path("api/auth/login/", LoginView.as_view(), name="login"),
     path("api/auth/token/refresh/", RefreshTokenView.as_view(), name='token-refresh'),
+    path("api/auth/logout/", LogoutView.as_view(), name="logout"),
+    path("api/auth/csrf/", CSRFTokenView.as_view(), name="csrf"),
     path("api/auth/activate/", UserActivationView.as_view(), name="activate",),
     path(
         "api/auth/resend-invitation/",
