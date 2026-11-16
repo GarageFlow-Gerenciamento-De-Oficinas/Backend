@@ -8,28 +8,28 @@ GarageFlow is being developed as a portfolio project with a strong focus on busi
 
 ---
 
-## 📌 About the Project
+## About the Project
 
 The backend provides the REST API and implements the business rules required by the GarageFlow platform.
 
 The planned system includes:
 
-* User management
-* Groups and permissions
-* Authentication and authorization
-* Customer management
-* Vehicle management
-* Service catalog
-* Parts catalog
-* Inventory management
-* Service orders
-* Quotes
-* Service execution
-* Parts usage
-* Payments and adjustments
-* Operational history
-* Interruption and cancellation workflows
-* Vehicle delivery
+- User management
+- Groups and permissions
+- Authentication and authorization
+- Customer management
+- Vehicle management
+- Service catalog
+- Parts catalog
+- Inventory management
+- Service orders
+- Quotes
+- Service execution
+- Parts usage
+- Payments and adjustments
+- Operational history
+- Interruption and cancellation workflows
+- Vehicle delivery
 
 The application is designed around the principle that important operational and commercial information should remain traceable throughout its lifecycle.
 
@@ -37,39 +37,35 @@ Instead of relying on physical deletion whenever possible, the system uses mecha
 
 ---
 
-# 🏗️ Architecture
+## Architecture
 
-GarageFlow follows a Django-based backend architecture with PostgreSQL as its primary database.
+GarageFlow follows a Django-based backend architecture with PostgreSQL as its primary database and a React frontend communicating through a REST API.
 
 ```text
-┌──────────────────────┐
-│       Frontend       │
-│                      │
-│       Vue.js         │
-└──────────┬───────────┘
-           │
-           │ HTTP / JSON
-           ▼
-┌──────────────────────┐
-│       Backend        │
-│                      │
-│   Django + DRF       │
-│                      │
-│  ┌────────────────┐  │
-│  │ Business Rules │  │
-│  └────────────────┘  │
-└──────────┬───────────┘
-           │
-           │ Django ORM
-           ▼
-┌──────────────────────┐
-│     PostgreSQL       │
-└──────────────────────┘
+┌──────────────────────────────┐
+│       React + TypeScript     │
+│           Frontend           │
+└──────────────┬───────────────┘
+               │
+               │ HTTP / JSON
+               ▼
+┌──────────────────────────────┐
+│       Django REST Framework  │
+│            Backend           │
+│                              │
+│       Business Rules         │
+└──────────────┬───────────────┘
+               │
+               │ Django ORM
+               ▼
+┌──────────────────────────────┐
+│          PostgreSQL          │
+└──────────────────────────────┘
 ```
 
 The development environment runs through Docker and can also be used through the VS Code Dev Container.
 
-The backend separates responsibilities between API, validation, business logic, and persistence.
+The backend separates responsibilities between API endpoints, validation, business logic, and persistence.
 
 The general request flow is:
 
@@ -89,7 +85,7 @@ HTTP Request
    Model
      │
      ▼
-PostgreSQL
+ PostgreSQL
 ```
 
 Services are introduced when business logic becomes complex enough to benefit from being isolated from views and serializers.
@@ -98,84 +94,69 @@ The project intentionally avoids unnecessary abstractions and favors explicit bu
 
 ---
 
-# 🛠️ Technology Stack
+## Technology Stack
 
-## Backend
+### Backend
 
-* Python
-* Django
-* Django REST Framework
-* PostgreSQL
-* Django REST Framework Simple JWT
-* drf-spectacular
+- Python 3.12
+- Django 5.2.17
+- Django REST Framework 3.18.1
+- PostgreSQL 16
+- Django REST Framework Simple JWT 5.5.1
+- drf-spectacular 0.30.0
+- django-cors-headers 4.9.0
 
-## Infrastructure
+### Infrastructure
 
-* Docker
-* Docker Compose
-* Dev Containers
+- Docker
+- Docker Compose
+- Dev Containers
 
-## Development
+### Development
 
-* Git
-* GitLab
-* GitHub
-* VS Code
-* pytest
-* pytest-django
+- Git
+- GitLab
+- GitHub
+- VS Code
+- pytest 9.1.1
+- pytest-django 4.14.0
 
-## Quality
+### Quality
 
-* Automated tests
-* CI/CD
-* OpenAPI
-* Swagger UI
+- Automated tests
+- CI/CD
+- OpenAPI
+- Swagger UI
 
 ---
 
-# 📁 Project Structure
+## Project Structure
+
+The backend is organized into Django applications, with user and customer-related responsibilities separated by domain.
 
 ```text
 garageflow/
-│
 ├── .devcontainer/
-│   └── devcontainer.json
-│
 ├── .github/
 │   └── workflows/
-│       └── tests.yml
-│
 ├── backend/
 │   ├── backend/
-│   │   ├── __init__.py
-│   │   ├── asgi.py
 │   │   ├── settings.py
 │   │   ├── urls.py
+│   │   ├── asgi.py
 │   │   └── wsgi.py
-│   │
 │   ├── client/
-│   │   ├── models.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   ├── views.py
-│   │   └── tests.py
-│   │
 │   ├── user/
-│   │   ├── models.py
 │   │   ├── serializers/
 │   │   ├── services/
 │   │   │   ├── activation.py
 │   │   │   ├── email.py
 │   │   │   └── invitation.py
 │   │   ├── views/
-│   │   ├── urls.py
 │   │   └── tests/
-│   │
 │   └── manage.py
-│
 ├── docker/
 │   └── Dockerfile
-│
 ├── .env.example
 ├── .gitignore
 ├── .gitlab-ci.yml
@@ -185,42 +166,135 @@ garageflow/
 └── requirements.txt
 ```
 
-The `.env` file is used locally and must not be committed to the repository.
+The `.env` file is used for local configuration and must not be committed to the repository.
 
 ---
 
-# 🔐 Authentication
+## Environment Configuration
+
+GarageFlow uses environment variables to configure Django and its database connection.
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Example configuration:
+
+```env
+POSTGRES_DB=garageflow
+POSTGRES_USER=garageflow
+POSTGRES_PASSWORD=your_password
+
+DB_NAME=garageflow
+DB_USER=garageflow
+DB_PASSWORD=your_password
+DB_HOST=db
+DB_PORT=5432
+
+SECRET_KEY=your-secret-key
+DEBUG=True
+
+FRONTEND_URL=http://localhost:5173
+
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+DEFAULT_FROM_EMAIL=noreply@garageflow.local
+```
+
+The email backend defaults to Django's console email backend in the current configuration. This is useful during development because outgoing emails are written to the application console instead of being delivered through an external email provider.
+
+Never commit real credentials, secret keys, or production environment variables.
+
+---
+
+## Authentication
 
 GarageFlow uses JWT-based authentication through **Django REST Framework Simple JWT**.
 
 Users authenticate using their email address and password.
 
-## Login
+The authentication flow uses:
 
-```text
-POST /api/auth/login/
-```
+- A short-lived access token returned in the JSON response.
+- A refresh token stored in an HttpOnly cookie.
+- CSRF protection for authentication operations.
+- Automatic access token renewal handled by the frontend.
+
+### Login
+
+`POST /api/auth/login/`
 
 Example request:
 
 ```json
 {
-    "email": "user@example.com",
-    "password": "password"
+  "email": "user@example.com",
+  "password": "password"
 }
 ```
 
-The API returns an access token and a refresh token.
+Successful response:
 
-The access token must be sent with authenticated requests using:
+```json
+{
+  "access": "access-token"
+}
+```
+
+The refresh token is not returned in the response body. It is stored in an HttpOnly cookie named `garageflow_refresh`.
+
+Authenticated API requests must include the access token in the Authorization header:
 
 ```text
 Authorization: Bearer <access_token>
 ```
 
+### Access Token Refresh
+
+`POST /api/auth/token/refresh/`
+
+The backend reads the refresh token from the `garageflow_refresh` cookie, validates it, and returns a new access token.
+
+The refresh token is not rotated during this operation.
+
+### Logout
+
+`POST /api/auth/logout/`
+
+The logout endpoint:
+
+- Attempts to blacklist the current refresh token.
+- Removes the refresh token cookie.
+- Returns a logout confirmation.
+
+### CSRF Protection
+
+CSRF protection is applied to login, token refresh, and logout operations.
+
+The frontend obtains the CSRF cookie through:
+
+`GET /api/auth/csrf/`
+
+The frontend must include the CSRF token in the `X-CSRFToken` request header when calling protected authentication endpoints.
+
+### Token Configuration
+
+| Setting | Value |
+|---|---|
+| Access token lifetime | 15 minutes |
+| Refresh token lifetime | 1 day |
+| Refresh token cookie | `garageflow_refresh` |
+| Cookie HttpOnly | Enabled |
+| Cookie Secure | Enabled when `DEBUG=False` |
+| Cookie SameSite | `Lax` |
+| Cookie path | `/api/auth/` |
+| Refresh token rotation | Disabled |
+| Refresh token blacklist | Used during logout |
+
 ---
 
-# 👤 User Management
+## User Management
 
 GarageFlow uses a custom Django user model based on `AbstractUser`.
 
@@ -228,26 +302,26 @@ The `username` field is not used. Email is the unique authentication identifier.
 
 Users currently contain information such as:
 
-* Email
-* Address
-* Phone
-* First name
-* Last name
-* Creation timestamp
-* Update timestamp
-* Activation timestamp
-* Active/inactive status
+- Email
+- Address
+- Phone
+- First name
+- Last name
+- Creation timestamp
+- Update timestamp
+- Activation timestamp
+- Active/inactive status
 
-The system distinguishes between **activation** and **active status**.
+The system distinguishes between **account activation** and **active status**.
 
-### Activated user
+### Activated User
 
 An activated user has:
 
-* A defined password
-* An `activated_at` timestamp
+- A defined password.
+- An `activated_at` timestamp.
 
-### Deactivated user
+### Deactivated User
 
 The `is_active` field is used to prevent a user from authenticating after administrative deactivation.
 
@@ -255,7 +329,7 @@ Deactivation does not physically remove the user from the database.
 
 ---
 
-# ✉️ User Invitation and Activation
+## User Invitation and Activation
 
 New users are created without a usable password and receive an invitation to activate their accounts.
 
@@ -265,47 +339,45 @@ The current flow is:
 
 ```text
 Administrator
-      │
-      ▼
+     │
+     ▼
 Create User
-      │
-      ▼
+     │
+     ▼
 User created without usable password
-      │
-      ▼
+     │
+     ▼
 Create Invitation
-      │
-      ▼
+     │
+     ▼
 Generate secure token
-      │
-      ▼
+     │
+     ▼
 Send invitation email
-      │
-      ▼
+     │
+     ▼
 User activates account
-      │
-      ▼
+     │
+     ▼
 User defines password
-      │
-      ▼
+     │
+     ▼
 Account activated
-      │
-      ▼
+     │
+     ▼
 JWT Login
 ```
 
-## Activation Endpoint
+### Activation Endpoint
 
-```text
-POST /api/auth/activate/
-```
+`POST /api/auth/activate/`
 
 Example request:
 
 ```json
 {
-    "token": "invitation-token",
-    "password": "MyPassword123!"
+  "token": "invitation-token",
+  "password": "MyPassword123!"
 }
 ```
 
@@ -313,7 +385,7 @@ Successful response:
 
 ```json
 {
-    "detail": "User activated successfully."
+  "detail": "User activated successfully."
 }
 ```
 
@@ -321,7 +393,7 @@ The activation endpoint does not require JWT authentication because the user has
 
 ---
 
-# 🔑 Invitation Token Security
+## Invitation Token Security
 
 Invitation tokens are generated using a cryptographically secure source of randomness.
 
@@ -331,28 +403,28 @@ The process is:
 
 ```text
 Original Token
-      │
-      ▼
+     │
+     ▼
    SHA-256
-      │
-      ▼
-Token Hash
-      │
-      ▼
-Database
+     │
+     ▼
+  Token Hash
+     │
+     ▼
+  Database
 ```
 
 When the user activates the account, the received token is hashed again and compared against the stored hash.
 
 Each invitation has:
 
-* A cryptographically secure random token
-* A SHA-256 token hash
-* A 24-hour expiration period
-* A single-use restriction
-* A usage timestamp
-* An invalidation timestamp
-* A creation timestamp
+- A cryptographically secure random token.
+- A SHA-256 token hash.
+- A 24-hour expiration period.
+- A single-use restriction.
+- A usage timestamp.
+- An invalidation timestamp.
+- A creation timestamp.
 
 The `UserInvitation` model contains:
 
@@ -365,23 +437,21 @@ invalidated_at
 created_at
 ```
 
-Invitation tokens are therefore treated as credentials and are not persisted in their original form.
+Invitation tokens are treated as credentials and are not persisted in their original form.
 
 ---
 
-# 🔄 Invitation Resend
+## Invitation Resend
 
 Users who have not yet activated their accounts can receive a new invitation.
 
-```text
-POST /api/auth/resend-invitation/
-```
+`POST /api/auth/resend-invitation/`
 
 Example request:
 
 ```json
 {
-    "email": "user@example.com"
+  "email": "user@example.com"
 }
 ```
 
@@ -389,17 +459,17 @@ The resend process is:
 
 ```text
 Existing Invitation
-        │
-        ▼
+       │
+       ▼
 Invalidate Previous Invitation
-        │
-        ▼
+       │
+       ▼
 Create New Invitation
-        │
-        ▼
+       │
+       ▼
 Generate New Token
-        │
-        ▼
+       │
+       ▼
 Send Email
 ```
 
@@ -413,7 +483,7 @@ This prevents the endpoint from exposing whether a specific email address is reg
 
 ---
 
-# ⚙️ Invitation Services
+## Invitation Services
 
 Invitation-related business logic is isolated in:
 
@@ -423,12 +493,12 @@ backend/user/services/invitation.py
 
 The service is responsible for:
 
-* Generating invitation tokens
-* Hashing tokens
-* Creating invitations
-* Defining expiration
-* Invalidating previous invitations
-* Resending invitations
+- Generating invitation tokens.
+- Hashing tokens.
+- Creating invitations.
+- Defining expiration.
+- Invalidating previous invitations.
+- Resending invitations.
 
 Email delivery is handled separately by:
 
@@ -440,7 +510,7 @@ This keeps token management and email delivery as separate responsibilities.
 
 ---
 
-# 🔓 Activation Service
+## Activation Service
 
 Account activation logic is isolated in:
 
@@ -467,14 +537,14 @@ If an error occurs during the operation, database changes performed within the t
 
 ---
 
-# 🔒 Activation Rules
+## Activation Rules
 
 An invitation can only be used when:
 
-* The token exists.
-* The invitation has not been used.
-* The invitation has not been invalidated.
-* The invitation has not expired.
+- The token exists.
+- The invitation has not been used.
+- The invitation has not been invalidated.
+- The invitation has not expired.
 
 These conditions are handled separately so the system can distinguish between different invalid invitation states internally.
 
@@ -482,7 +552,7 @@ Passwords are never stored as plain text. Django's password hashing mechanism is
 
 ---
 
-# 👥 Groups and Permissions
+## Groups and Permissions
 
 GarageFlow is planned to use a role and permission system based on groups and granular permissions.
 
@@ -490,9 +560,9 @@ Users will be able to belong to multiple groups, and their effective permissions
 
 The initial business roles are planned as:
 
-* Administrator
-* Attendant
-* Mechanic
+- Administrator
+- Attendant
+- Mechanic
 
 Permissions are modeled around resources and actions.
 
@@ -518,7 +588,7 @@ The full authorization system is planned for a later development stage.
 
 ---
 
-# 👤 Customers
+## Customers
 
 Customer management is currently implemented as part of the backend.
 
@@ -536,7 +606,7 @@ Vehicles are associated with customers and remain part of the customer domain ra
 
 ---
 
-# 🚗 Service Orders
+## Service Orders
 
 Service Orders are one of the central business entities of GarageFlow.
 
@@ -544,44 +614,44 @@ The planned operational lifecycle is:
 
 ```text
 Awaiting Evaluation
-        ↓
+       ↓
 Quote Awaiting Approval
-        ↓
+       ↓
 Quote Approved
-        ↓
+       ↓
 Service In Progress
-        ↓
+       ↓
 Testing
-        ↓
+       ↓
 Service Completed
-        ↓
+       ↓
 Payment Completed
-        ↓
+       ↓
 Vehicle Delivered
 ```
 
 The workflow also supports business scenarios such as:
 
-* Cancellation
-* Interruption
-* Regularization
-* Complementary service orders
-* Rework after failed testing
+- Cancellation
+- Interruption
+- Regularization
+- Complementary service orders
+- Rework after failed testing
 
 Service Order transitions are governed by business rules and are intended to be recorded in the service order history.
 
 ---
 
-# 📦 Inventory
+## Inventory
 
 The inventory domain is designed around historical stock movements.
 
 The system distinguishes between:
 
-* Physical stock
-* Reserved stock
-* Available stock
-* Safety stock
+- Physical stock
+- Reserved stock
+- Available stock
+- Safety stock
 
 Available stock is calculated as:
 
@@ -597,7 +667,7 @@ Parts reserved for Service Orders are also tracked separately from physical stoc
 
 ---
 
-# 💰 Quotes and Historical Values
+## Quotes and Historical Values
 
 Commercial values must remain historically consistent.
 
@@ -625,29 +695,29 @@ This principle applies to relevant service, part, quote, payment, and operationa
 
 ---
 
-# 🧾 History and Auditability
+## History and Auditability
 
 GarageFlow is designed to preserve an operational history of important business events.
 
 Service Order history is planned to record events such as:
 
-* Status changes
-* Data changes
-* Quote changes
-* Comments
-* Customer communication
-* Service execution
-* Testing results
-* Adjustments
-* Cancellations
-* Interruptions
-* Other relevant operational events
+- Status changes
+- Data changes
+- Quote changes
+- Comments
+- Customer communication
+- Service execution
+- Testing results
+- Adjustments
+- Cancellations
+- Interruptions
+- Other relevant operational events
 
 Historical records are intended to remain immutable after creation.
 
 ---
 
-# 🔒 Data Integrity
+## Data Integrity
 
 The system prioritizes the preservation of operational and commercial information.
 
@@ -655,18 +725,18 @@ Important entities should not be physically deleted when doing so could compromi
 
 Depending on the domain, the system uses mechanisms such as:
 
-* Active/inactive states
-* Status transitions
-* Cancellation states
-* Compensating movements
-* Historical records
-* Timestamps
+- Active/inactive states
+- Status transitions
+- Cancellation states
+- Compensating movements
+- Historical records
+- Timestamps
 
 The objective is to maintain traceability throughout the lifecycle of the data.
 
 ---
 
-# 📖 API Documentation
+## API Documentation
 
 The API uses **OpenAPI** through `drf-spectacular`.
 
@@ -688,65 +758,84 @@ Specific endpoints can use `drf-spectacular` annotations to provide additional r
 
 ---
 
-# 🧪 Testing
+## API Endpoints
+
+The following authentication and user-related endpoints are currently configured:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/login/` | Authenticate a user |
+| POST | `/api/auth/token/refresh/` | Refresh the access token |
+| POST | `/api/auth/logout/` | End the authenticated session |
+| GET | `/api/auth/csrf/` | Initialize the CSRF cookie |
+| POST | `/api/auth/activate/` | Activate a user account |
+| POST | `/api/auth/resend-invitation/` | Request a new activation invitation |
+| — | `/api/users/` | User management routes |
+| — | `/api/clients/` | Customer and vehicle routes |
+
+For the complete request and response specifications, refer to Swagger UI.
+
+---
+
+## Testing
 
 Automated tests are an integral part of the project.
 
 The backend uses:
 
-* pytest
-* pytest-django
-* Django REST Framework testing utilities
+- pytest
+- pytest-django
+- Django REST Framework testing utilities
 
 Tests cover both API behavior and business services.
 
 Current test coverage includes customer management and the complete user invitation and activation flow.
 
-## User and Invitation Tests
+### User and Invitation Tests
 
 The invitation flow includes tests for:
 
-* User creation
-* Invitation creation
-* Token generation
-* Token hashing
-* SHA-256 hash validation
-* Invitation expiration
-* Invitation invalidation
-* Single-use invitation enforcement
-* Invitation resend
-* Email delivery
+- User creation
+- Invitation creation
+- Token generation
+- Token hashing
+- SHA-256 hash validation
+- Invitation expiration
+- Invitation invalidation
+- Single-use invitation enforcement
+- Invitation resend
+- Email delivery
 
-## Account Activation Tests
+### Account Activation Tests
 
 The activation flow includes tests for:
 
-* Valid activation
-* Invalid tokens
-* Expired invitations
-* Used invitations
-* Invalidated invitations
-* Password validation
-* Password definition
-* User activation
-* `activated_at`
-* `used_at`
-* Authentication after activation
+- Valid activation
+- Invalid tokens
+- Expired invitations
+- Used invitations
+- Invalidated invitations
+- Password validation
+- Password definition
+- User activation
+- `activated_at`
+- `used_at`
+- Authentication after activation
 
-## API Tests
+### API Tests
 
 API tests cover:
 
-* User creation
-* User retrieval
-* User updates
-* User deactivation
-* Active/inactive filtering
-* Invitation activation
-* Invitation resend
-* Invalid email input
-* Unknown email addresses
-* Already activated users
+- User creation
+- User retrieval
+- User updates
+- User deactivation
+- Active/inactive filtering
+- Invitation activation
+- Invitation resend
+- Invalid email input
+- Unknown email addresses
+- Already activated users
 
 Run the complete test suite with:
 
@@ -756,43 +845,43 @@ pytest
 
 ---
 
-# 🔄 CI/CD
+## CI/CD
 
 GarageFlow uses automated CI/CD pipelines to validate changes.
 
-The project currently includes CI configurations for GitLab and GitHub.
+The project includes CI configurations for GitLab and GitHub.
 
 The test suite acts as a quality gate for merge requests.
 
 ```text
 Feature Branch
-      │
-      ▼
-    Commit
-      │
-      ▼
-     Push
-      │
-      ▼
-Merge Request
-      │
-      ▼
-Automated CI
-      │
-      ▼
+     │
+     ▼
+   Commit
+     │
+     ▼
+    Push
+     │
+     ▼
+ Merge Request
+     │
+     ▼
+ Automated CI
+     │
+     ▼
 Install Dependencies
-      │
-      ▼
-Database Setup
-      │
-      ▼
-Run Tests
-      │
-   ┌──┴──┐
-   ▼     ▼
- PASS   FAIL
-   │     │
-   ▼     ▼
+     │
+     ▼
+ Database Setup
+     │
+     ▼
+   Run Tests
+     │
+  ┌──┴──┐
+  ▼     ▼
+PASS   FAIL
+  │     │
+  ▼     ▼
 Merge  Blocked
 Allowed
 ```
@@ -803,24 +892,23 @@ This quality gate is intended to prevent regressions from reaching the main deve
 
 ---
 
-# 🐳 Development Environment
+## Development Environment
 
 GarageFlow uses Docker to provide a consistent development environment.
 
-## Requirements
+### Requirements
 
-* Docker
-* Docker Compose
-* VS Code
-* Dev Containers extension
+- Docker
+- Docker Compose
+- VS Code
+- Dev Containers extension
 
-## Configuration
+### Configuration
 
 Clone the repository:
 
 ```bash
 git clone <repository-url>
-
 cd garageflow
 ```
 
@@ -830,28 +918,11 @@ Create the local environment file:
 cp .env.example .env
 ```
 
-Configure the required environment variables.
-
-Example:
-
-```env
-POSTGRES_DB=garageflow
-POSTGRES_USER=garageflow
-POSTGRES_PASSWORD=your_password
-
-DB_NAME=garageflow
-DB_USER=garageflow
-DB_PASSWORD=your_password
-DB_HOST=db
-DB_PORT=5432
-
-SECRET_KEY=your-secret-key
-DEBUG=True
-```
+Configure the required environment variables as described in the Environment Configuration section.
 
 ---
 
-# 🚀 Running with Docker
+## Running with Docker
 
 Build and start the development environment:
 
@@ -864,6 +935,8 @@ The backend will be available at:
 ```text
 http://localhost:8000
 ```
+
+PostgreSQL is exposed on host port `5445` and uses port `5432` inside the Docker network.
 
 Run migrations with:
 
@@ -883,9 +956,15 @@ Swagger UI:
 http://localhost:8000/api/docs/
 ```
 
+OpenAPI schema:
+
+```text
+http://localhost:8000/api/schema/
+```
+
 ---
 
-# 🧑‍💻 Dev Container
+## Dev Container
 
 The project includes a VS Code Dev Container configuration.
 
@@ -915,145 +994,153 @@ The Django project is located at:
 
 ---
 
-# 🗺️ Roadmap
+## Roadmap
 
-## Foundation
+### Foundation
 
-* [x] Docker
-* [x] PostgreSQL
-* [x] Django
-* [x] Django REST Framework
-* [x] Environment variables
-* [x] Dev Container
-* [x] Git
-* [x] Initial application structure
-* [x] OpenAPI / Swagger
-* [x] JWT authentication
-* [x] CI/CD quality gate
+- [x] Docker
+- [x] PostgreSQL
+- [x] Django
+- [x] Django REST Framework
+- [x] Environment variables
+- [x] Dev Container
+- [x] Git
+- [x] Initial application structure
+- [x] OpenAPI / Swagger
+- [x] JWT authentication
+- [x] CI/CD quality gate
 
-## Users and Authorization
+### Users and Authorization
 
-* [x] Custom user model
-* [x] Email-based authentication
-* [x] User management API
-* [x] User activation flow
-* [x] Invitation system
-* [x] Invitation token hashing
-* [x] Invitation expiration
-* [x] Single-use invitations
-* [x] Invitation invalidation
-* [x] Invitation resend
-* [x] Invitation email service
-* [x] Activation API
-* [x] Tests for invitation and activation flows
-* [ ] User groups
-* [ ] Permissions
-* [ ] Resource/action permission model
-* [ ] Endpoint-level authorization
+- [x] Custom user model
+- [x] Email-based authentication
+- [x] User management API
+- [x] User activation flow
+- [x] Invitation system
+- [x] Invitation token hashing
+- [x] Invitation expiration
+- [x] Single-use invitations
+- [x] Invitation invalidation
+- [x] Invitation resend
+- [x] Invitation email service
+- [x] Activation API
+- [x] Tests for invitation and activation flows
+- [ ] User groups
+- [ ] Permissions
+- [ ] Resource/action permission model
+- [ ] Endpoint-level authorization
 
-## Customers and Vehicles
+### Customers and Vehicles
 
-* [x] Customer management
-* [x] Customer deactivation
-* [x] Vehicle management
-* [ ] Customer document support
+- [x] Customer management
+- [x] Customer deactivation
+- [x] Vehicle management
+- [ ] Customer document support
 
-## Catalogs
+### Catalogs
 
-* [ ] Service catalog
-* [ ] Parts catalog
+- [ ] Service catalog
+- [ ] Parts catalog
 
-## Inventory
+### Inventory
 
-* [ ] Physical stock
-* [ ] Reserved stock
-* [ ] Available stock calculation
-* [ ] Stock movements
-* [ ] Safety stock
-* [ ] Inventory alerts
+- [ ] Physical stock
+- [ ] Reserved stock
+- [ ] Available stock calculation
+- [ ] Stock movements
+- [ ] Safety stock
+- [ ] Inventory alerts
 
-## Service Orders
+### Service Orders
 
-* [ ] Service Order creation
-* [ ] Service Order lifecycle
-* [ ] Quotes
-* [ ] Service Order items
-* [ ] Parts usage
-* [ ] Service execution
-* [ ] Testing
-* [ ] Interruption
-* [ ] Cancellation
-* [ ] Regularization
-* [ ] Complementary Service Orders
-* [ ] Vehicle delivery
+- [ ] Service Order creation
+- [ ] Service Order lifecycle
+- [ ] Quotes
+- [ ] Service Order items
+- [ ] Parts usage
+- [ ] Service execution
+- [ ] Testing
+- [ ] Interruption
+- [ ] Cancellation
+- [ ] Regularization
+- [ ] Complementary Service Orders
+- [ ] Vehicle delivery
 
-## Finance
+### Finance
 
-* [ ] Payments
-* [ ] Multiple payment methods
-* [ ] Adjustments
-* [ ] Balance management
+- [ ] Payments
+- [ ] Multiple payment methods
+- [ ] Adjustments
+- [ ] Balance management
 
-## History
+### History
 
-* [ ] Service Order history
-* [ ] Audit trail
-* [ ] Inventory history
-* [ ] Financial history
+- [ ] Service Order history
+- [ ] Audit trail
+- [ ] Inventory history
+- [ ] Financial history
 
-## Quality and Delivery
+### Quality and Delivery
 
-* [x] Automated tests
-* [x] OpenAPI documentation
-* [x] Swagger UI
-* [x] CI pipeline
-* [x] Merge request quality gate
-* [ ] Linting
-* [ ] Test coverage reporting
-* [ ] Automated build
-* [ ] Automated deployment
-
-## Frontend
-
-* [ ] Vue.js application
-* [ ] Authentication interface
-* [ ] User management interface
-* [ ] Customer management
-* [ ] Vehicle management
-* [ ] Service Order workflow
-* [ ] Inventory management
-* [ ] Financial management
+- [x] Automated tests
+- [x] OpenAPI documentation
+- [x] Swagger UI
+- [x] CI pipeline
+- [x] Merge request quality gate
+- [ ] Linting
+- [ ] Test coverage reporting
+- [ ] Automated build
+- [ ] Automated deployment
 
 ---
 
-# 📚 Documentation
+## Frontend
+
+The frontend is maintained as a separate application built with React and TypeScript.
+
+Its documentation, setup instructions, and development workflow are described in the frontend README.
+
+Current frontend development includes:
+
+- [x] React application
+- [x] Authentication interface
+- [x] User management interface
+- [ ] Customer management
+- [ ] Vehicle management
+- [ ] Service Order workflow
+- [ ] Inventory management
+- [ ] Financial management
+
+---
+
+## Documentation
 
 The project documentation is maintained alongside the source code in this repository.
 
 As the system grows, additional documentation will be introduced for:
 
-* Architecture
-* Domain rules
-* API behavior
-* Architectural decisions
-* Development practices
+- Architecture
+- Domain rules
+- API behavior
+- Architectural decisions
+- Development practices
 
-The README currently serves as the primary project documentation.
+The README currently serves as the primary backend project documentation.
 
 ---
 
-# 👨‍💻 Development
+## Development
 
 GarageFlow is being developed by **Jean França** as a portfolio and software engineering project.
 
 The project is intended to demonstrate not only knowledge of specific technologies, but also the ability to:
 
-* Model complex business rules
-* Design maintainable systems
-* Develop REST APIs
-* Implement authentication and authorization
-* Preserve historical data integrity
-* Build automated tests
-* Document APIs
-* Implement CI/CD practices
-* Develop a complete software product incrementally
+- Model complex business rules
+- Design maintainable systems
+- Develop REST APIs
+- Implement authentication and authorization
+- Preserve historical data integrity
+- Build automated tests
+- Document APIs
+- Implement CI/CD practices
+- Develop a complete software product incrementally

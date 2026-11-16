@@ -10,7 +10,11 @@
             "extensions": [
                 "ms-python.python",
                 "ms-python.vscode-pylance"
-            ]
+            ],
+            "settings": {
+              "python.analysis.diagnosticMode": "openFilesOnly",
+              "python.analysis.exclude": ["**/node_modules", "**/__pycache__", "**/.venv", "**/venv", "**/staticfiles"]
+            }
         }
     }
 }
